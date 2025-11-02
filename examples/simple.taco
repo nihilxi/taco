@@ -1,0 +1,7 @@
+// Simple arithmetic test
+a = 5
+b = 3
+c = a + b
+d = a * b
+e = c - d
+result = e / 2

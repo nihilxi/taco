@@ -16,6 +16,7 @@ std::vector<Token> lexing(const std::string &source_code)
     {
         char symbol = source_code[i];
         
+        // Skip whitespace
         if (isspace(symbol))
         {
             if (symbol == '\n')
@@ -30,7 +31,47 @@ std::vector<Token> lexing(const std::string &source_code)
             continue;
         }
 
-        if (isalpha(symbol))
+        // Skip line comments
+        if (symbol == '/' && i + 1 < source_code.size() && source_code[i + 1] == '/')
+        {
+            while (i < source_code.size() && source_code[i] != '\n')
+            {
+                i++;
+            }
+            line++;
+            column = 1;
+            continue;
+        }
+
+        // Skip block comments
+        if (symbol == '/' && i + 1 < source_code.size() && source_code[i + 1] == '*')
+        {
+            i += 2;
+            column += 2;
+            while (i + 1 < source_code.size())
+            {
+                if (source_code[i] == '*' && source_code[i + 1] == '/')
+                {
+                    i += 2;
+                    column += 2;
+                    break;
+                }
+                if (source_code[i] == '\n')
+                {
+                    line++;
+                    column = 1;
+                }
+                else
+                {
+                    column++;
+                }
+                i++;
+            }
+            continue;
+        }
+
+        // Identifier or keyword
+        if (isalpha(symbol) || symbol == '_')
         {
             std::string identifier;
             int start_col = column;
@@ -43,7 +84,22 @@ std::vector<Token> lexing(const std::string &source_code)
             }
             i--;
             
-            tokens.push_back({TokenType::IDENTIFIER, identifier, line, start_col});
+            // Check for keywords
+            TokenType type = TokenType::IDENTIFIER;
+            if (identifier == "if") type = TokenType::IF;
+            else if (identifier == "else") type = TokenType::ELSE;
+            else if (identifier == "while") type = TokenType::WHILE;
+            else if (identifier == "for") type = TokenType::FOR;
+            else if (identifier == "return") type = TokenType::RETURN;
+            else if (identifier == "int") type = TokenType::INT;
+            else if (identifier == "float") type = TokenType::FLOAT;
+            else if (identifier == "double") type = TokenType::DOUBLE;
+            else if (identifier == "bool") type = TokenType::BOOL;
+            else if (identifier == "void") type = TokenType::VOID;
+            else if (identifier == "true") type = TokenType::TRUE;
+            else if (identifier == "false") type = TokenType::FALSE;
+            
+            tokens.push_back({type, identifier, line, start_col});
         }
         // Number
         else if (isdigit(symbol))
@@ -61,7 +117,7 @@ std::vector<Token> lexing(const std::string &source_code)
             
             tokens.push_back({TokenType::NUMBER, number, line, start_col});
         }
-        
+        // Operators and delimiters
         else if (symbol == '+')
         {
             tokens.push_back({TokenType::ADD, "+", line, column});
@@ -82,9 +138,117 @@ std::vector<Token> lexing(const std::string &source_code)
             tokens.push_back({TokenType::DIV, "/", line, column});
             column++;
         }
+        else if (symbol == '%')
+        {
+            tokens.push_back({TokenType::MOD, "%", line, column});
+            column++;
+        }
         else if (symbol == '=')
         {
-            tokens.push_back({TokenType::ASSIGN, "=", line, column});
+            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
+            {
+                tokens.push_back({TokenType::EQ, "==", line, column});
+                i++;
+                column += 2;
+            }
+            else
+            {
+                tokens.push_back({TokenType::ASSIGN, "=", line, column});
+                column++;
+            }
+        }
+        else if (symbol == '!')
+        {
+            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
+            {
+                tokens.push_back({TokenType::NEQ, "!=", line, column});
+                i++;
+                column += 2;
+            }
+            else
+            {
+                tokens.push_back({TokenType::NOT, "!", line, column});
+                column++;
+            }
+        }
+        else if (symbol == '<')
+        {
+            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
+            {
+                tokens.push_back({TokenType::LTE, "<=", line, column});
+                i++;
+                column += 2;
+            }
+            else
+            {
+                tokens.push_back({TokenType::LT, "<", line, column});
+                column++;
+            }
+        }
+        else if (symbol == '>')
+        {
+            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
+            {
+                tokens.push_back({TokenType::GTE, ">=", line, column});
+                i++;
+                column += 2;
+            }
+            else
+            {
+                tokens.push_back({TokenType::GT, ">", line, column});
+                column++;
+            }
+        }
+        else if (symbol == '&' && i + 1 < source_code.size() && source_code[i + 1] == '&')
+        {
+            tokens.push_back({TokenType::AND, "&&", line, column});
+            i++;
+            column += 2;
+        }
+        else if (symbol == '|' && i + 1 < source_code.size() && source_code[i + 1] == '|')
+        {
+            tokens.push_back({TokenType::OR, "||", line, column});
+            i++;
+            column += 2;
+        }
+        else if (symbol == '(')
+        {
+            tokens.push_back({TokenType::LPAREN, "(", line, column});
+            column++;
+        }
+        else if (symbol == ')')
+        {
+            tokens.push_back({TokenType::RPAREN, ")", line, column});
+            column++;
+        }
+        else if (symbol == '{')
+        {
+            tokens.push_back({TokenType::LBRACE, "{", line, column});
+            column++;
+        }
+        else if (symbol == '}')
+        {
+            tokens.push_back({TokenType::RBRACE, "}", line, column});
+            column++;
+        }
+        else if (symbol == '[')
+        {
+            tokens.push_back({TokenType::LBRACKET, "[", line, column});
+            column++;
+        }
+        else if (symbol == ']')
+        {
+            tokens.push_back({TokenType::RBRACKET, "]", line, column});
+            column++;
+        }
+        else if (symbol == ';')
+        {
+            tokens.push_back({TokenType::SEMICOLON, ";", line, column});
+            column++;
+        }
+        else if (symbol == ',')
+        {
+            tokens.push_back({TokenType::COMMA, ",", line, column});
             column++;
         }
         else
@@ -97,64 +261,3 @@ std::vector<Token> lexing(const std::string &source_code)
     
     return tokens;
 }
-
-#ifndef LIB_BUILD
-int main(int argc, char *argv[])
-{
-    if (argc < 2)
-    {
-        std::cerr << "Usage: " << argv[0] << " <source_file.taco>" << std::endl;
-        return 1;
-    }
-
-    std::string fn = argv[1], text;
-
-    if (fn.substr(fn.find_last_of(".") + 1) == "taco")
-    {
-        std::ifstream source_code(argv[1]);
-
-        if (source_code.is_open())
-        {
-            std::string line;
-            while (std::getline(source_code, line))
-            {
-                text += line + "\n";
-            }
-            source_code.close();
-
-            std::vector<Token> tokens = lexing(text);
-            
-            std::cout << "=== TOKENS ===" << std::endl;
-            for (const auto &token : tokens)
-            {
-                std::cout << "Type: ";
-                switch (token.type)
-                {
-                    case TokenType::IDENTIFIER: std::cout << "IDENTIFIER"; break;
-                    case TokenType::NUMBER: std::cout << "NUMBER"; break;
-                    case TokenType::ADD: std::cout << "ADD"; break;
-                    case TokenType::SUB: std::cout << "SUB"; break;
-                    case TokenType::MUL: std::cout << "MUL"; break;
-                    case TokenType::DIV: std::cout << "DIV"; break;
-                    case TokenType::ASSIGN: std::cout << "ASSIGN"; break;
-                    case TokenType::END_OF_FILE: std::cout << "EOF"; break;
-                }
-                std::cout << ", Value: '" << token.value << "', Line: " << token.line 
-                          << ", Column: " << token.column << std::endl;
-            }
-        }
-        else
-        {
-            std::cerr << "Error: Could not open file" << std::endl;
-            return 1;
-        }
-    }
-    else
-    {
-        std::cerr << "Error: Incorrect source file extension (expected .taco)" << std::endl;
-        return 1;
-    }
-
-    return 0;
-}
-#endif // LIB_BUILD

@@ -1,0 +1,99 @@
+(* ========================================= *)
+(* TACO Language Grammar - EBNF Specification *)
+(* ========================================= *)
+
+(* Program Structure *)
+program = { statement } ;
+
+statement = variable_declaration
+          | assignment
+          | if_statement
+          | while_statement
+          | for_statement
+          | function_declaration
+          | return_statement
+          | expression_statement
+          | block ;
+
+(* Variable Declaration *)
+variable_declaration = type, identifier, [ "=", expression ], ";" ;
+
+type = "int" | "float" | "double" | "bool" | "void" ;
+
+(* Assignment *)
+assignment = identifier, "=", expression, ";" ;
+
+expression_statement = expression, ";" ;
+
+(* Control Flow *)
+if_statement = "if", "(", expression, ")", statement, [ "else", statement ] ;
+
+while_statement = "while", "(", expression, ")", statement ;
+
+for_statement = "for", "(", [ assignment | variable_declaration ], ";", 
+                [ expression ], ";", [ assignment ], ")", statement ;
+
+(* Functions *)
+function_declaration = type, identifier, "(", [ parameter_list ], ")", block ;
+
+parameter_list = parameter, { ",", parameter } ;
+
+parameter = type, identifier ;
+
+return_statement = "return", [ expression ], ";" ;
+
+(* Block *)
+block = "{", { statement }, "}" ;
+
+(* Expressions *)
+expression = logical_or ;
+
+logical_or = logical_and, { "||", logical_and } ;
+
+logical_and = equality, { "&&", equality } ;
+
+equality = relational, { ( "==" | "!=" ), relational } ;
+
+relational = additive, { ( "<" | "<=" | ">" | ">=" ), additive } ;
+
+additive = multiplicative, { ( "+" | "-" ), multiplicative } ;
+
+multiplicative = unary, { ( "*" | "/" | "%" ), unary } ;
+
+unary = ( "!" | "-" | "+" ), unary
+      | postfix ;
+
+postfix = primary, { "[", expression, "]" | "(", [ argument_list ], ")" } ;
+
+primary = identifier
+        | number
+        | "true"
+        | "false"
+        | "(", expression, ")" ;
+
+argument_list = expression, { ",", expression } ;
+
+(* Lexical Elements *)
+identifier = letter, { letter | digit | "_" } ;
+
+number = integer | float_number ;
+
+integer = digit, { digit } ;
+
+float_number = digit, { digit }, ".", { digit } ;
+
+letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" 
+       | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" 
+       | "u" | "v" | "w" | "x" | "y" | "z"
+       | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" 
+       | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" 
+       | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+(* Comments *)
+comment = line_comment | block_comment ;
+
+line_comment = "//", { ? any character except newline ? }, "\n" ;
+
+block_comment = "/*", { ? any character ? }, "*/" ;
