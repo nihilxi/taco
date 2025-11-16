@@ -3,5 +3,5 @@ a = 5
 b = 3
 c = a + b
 d = a * b
-e = c - d
-result = e / 2
+result = c - d / 2
+print(result)

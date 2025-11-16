@@ -1,84 +1,59 @@
 # TACO - Three-Address Code Compiler
 
-A TACO language compiler with energy analysis and C code generation.
+A lightweight compiler for arithmetic expressions with energy consumption analysis and C code generation.
 
-## Overview
+## Features
 
-TACO is an experimental compiler that:
-1. Parses a simple imperative programming language
-2. Generates Three-Address Code (TAC) intermediate representation
-3. Performs instruction-level energy consumption analysis
-4. Generates compilation-ready C code
+- **Simple syntax** - Clean arithmetic expression language
+- **TAC intermediate representation** - Three-Address Code generation
+- **Energy analysis** - Instruction-level power consumption modeling
+- **C code generation** - Compiles to optimized C code
+- **Print statements** - Output support for computed results
 
-## Project Structure
-
-```
-taco/
-├── include/          # Header files
-│   ├── lexer.h       # Lexical analyzer
-│   ├── parser.h      # Parser and AST definitions
-│   ├── tac.h         # TAC generator
-│   ├── energy.h      # Energy model
-│   └── codegen.h     # C code generator
-├── src/              # Implementation files
-│   ├── lexer.cpp
-│   ├── parser.cpp
-│   ├── tac_gen.cpp
-│   ├── energy.cpp
-│   ├── codegen.cpp
-│   └── main.cpp      # Main compiler driver
-├── grammar/          # Language specification
-│   ├── grammar.ebnf  # EBNF grammar
-│   └── language_spec.md
-├── examples/         # Example programs
-│   ├── simple.taco   # Basic example
-│   ├── fft.taco      # Fast Fourier Transform
-│   └── dct.taco      # Discrete Cosine Transform
-├── tests/            # Test suite
-├── benchmarks/       # Performance benchmarks
-└── Makefile
-```
-
-## Build Instructions
-
-### Requirements
-- g++ with C++14 support
-- make
-- gcc (for compiling generated C code)
-
-### Building the Compiler
+## Quick Start
 
 ```bash
+# Build
 make
+
+# Compile a TACO program
+./taco examples/simple.taco -o output.c
+
+# Compile and run the generated C code
+gcc output.c -o output && ./output
 ```
 
-This produces the `taco` compiler binary in the project root.
+## Language Syntax
 
-### Running Tests
+```taco
+// Variable assignments with arithmetic
+a = 10
+b = 20
+sum = a + b
 
-```bash
-# Basic test
-make test
+// Parentheses for grouping
+result = (a + b) * (sum / 2)
 
-# FFT test
-make test-fft
-
-# DCT test
-make test-dct
-
-# Full test suite
-make test-all
+// Print output
+print(result)
 ```
+
+### Supported Features
+
+**Operators:**
+- Arithmetic: `+`, `-`, `*`, `/`
+- Assignment: `=`
+- Grouping: `(`, `)`
+
+**Data Types:**
+- Integers and floating-point numbers
+- Implicit double-precision arithmetic
+
+**Statements:**
+- Variable assignments: `variable = expression`
+- Print statements: `print(expression)`
 
 ## Usage
-
-### Basic Compilation
-
-```bash
-./taco program.taco
-```
-
-Compiles `program.taco` and generates `output.c`.
 
 ### Command-Line Options
 
@@ -86,205 +61,166 @@ Compiles `program.taco` and generates `output.c`.
 ./taco [options] <input.taco>
 
 Options:
-  --tokens          Display token stream
-  --ast             Display abstract syntax tree
-  --tac             Display three-address code
-  --energy          Display energy consumption report
-  --energy-table    Display energy cost table
-  -o <file>         Specify output C file (default: output.c)
-  --help            Display help message
+  --tokens          Show lexical token stream
+  --ast             Show abstract syntax tree
+  --tac             Show three-address code
+  --energy          Show energy consumption report
+  --energy-table    Show energy cost table
+  -o <file>         Output C file (default: output.c)
+  --help            Show help message
 ```
 
-### Example Workflow
+### Examples
 
 ```bash
-# Compile with full diagnostics
-./taco --tokens --ast --tac --energy examples/simple.taco -o simple.c
+# View compilation stages
+./taco --tokens --ast --tac examples/simple.taco
 
-# Compile generated C code
-gcc simple.c -o simple -lm
-
-# Execute
-./simple
-```
-
-## TACO Language Reference
-
-### Syntax Example
-
-```taco
-// Simple arithmetic
-a = 5
-b = 3
-c = a + b
-d = a * b
-result = c + d
-```
-
-### Supported Operators
-
-**Arithmetic:**
-- `+` - addition
-- `-` - subtraction
-- `*` - multiplication
-- `/` - division
-- `%` - modulo
-
-**Comparison** (planned):
-- `==`, `!=`, `<`, `<=`, `>`, `>=`
-
-**Logical** (planned):
-- `&&`, `||`, `!`
-
-### Current Limitations
-
-The current parser implementation supports:
-- Variable assignments
-- Arithmetic expressions
-- Variables and numeric literals
-
-Planned features:
-- Conditional statements (if/else)
-- Loop constructs (while, for)
-- Functions
-- Arrays
-- Type system
-
-## Energy Model
-
-The compiler estimates energy consumption based on TAC instruction costs.
-
-### Instruction Costs (energy units)
-
-| Operation | Base Cost | Memory Cost | Total |
-|-----------|-----------|-------------|-------|
-| ADD/SUB   | 1.0       | 0.5         | 1.5   |
-| MUL       | 3.0       | 0.5         | 3.5   |
-| DIV/MOD   | 20.0      | 0.5         | 20.5  |
-| ASSIGN    | 0.5       | 0.5         | 1.0   |
-| JUMP      | 5.0       | 0.0         | 5.0   |
-| CALL      | 10.0      | 2.0         | 12.0  |
-
-Full cost table: `./taco --energy-table`
-
-### Energy Analysis Report
-
-```bash
+# Analyze energy consumption
 ./taco --energy examples/dct.taco
+
+# Specify output file
+./taco examples/fft.taco -o fft.c
 ```
 
-Generates a detailed report including:
-- Execution count per instruction
-- Energy cost per operation type
-- Total program energy consumption
-- Percentage breakdown by instruction type
+## Project Structure
+
+```
+taco/
+├── src/              # Source code
+│   ├── lexer.cpp     # Tokenization
+│   ├── parser.cpp    # Syntax analysis and AST
+│   ├── tac_gen.cpp   # TAC generation
+│   ├── energy.cpp    # Energy modeling
+│   ├── codegen.cpp   # C code generation
+│   └── main.cpp      # Compiler driver
+├── include/          # Headers
+├── examples/         # Sample programs
+│   ├── simple.taco
+│   ├── fft.taco      # Fast Fourier Transform
+│   ├── dct.taco      # Discrete Cosine Transform
+│   └── rectangle.taco
+└── Makefile
+```
 
 ## Compilation Pipeline
 
 ```
-Source code (.taco)
-        ↓
-    [Lexer]
-        ↓
-    Token stream
-        ↓
-    [Parser]
-        ↓
-    AST (Abstract Syntax Tree)
-        ↓
-    [TAC Generator]
-        ↓
-    TAC (Three-Address Code)
-        ↓
-    [Energy Analyzer] ← Energy model
-        ↓
-    Energy report
-        ↓
-    [C Code Generator]
-        ↓
-    C code (.c)
-        ↓
-    [gcc]
-        ↓
-    Executable binary
+TACO source → Lexer → Parser → AST → TAC Generator → Energy Analyzer
+                                                            ↓
+                                                     Energy Report
+                                                            ↓
+                                                    C Code Generator
+                                                            ↓
+                                                         C code
 ```
 
-## Code Transformation Examples
+## Energy Model
 
-### TACO Source
+Energy costs are based on typical CPU instruction latencies:
+
+| Operation | Energy Cost | Description |
+|-----------|-------------|-------------|
+| ADD, SUB  | 1.5 units   | Basic arithmetic |
+| MUL       | 3.5 units   | Multiplication |
+| DIV       | 20.5 units  | Division (expensive) |
+| ASSIGN    | 1.0 unit    | Register move |
+| PRINT     | 12.0 units  | I/O operation |
+
+View full energy table:
+```bash
+./taco --energy-table
+```
+
+## Example: Rectangle Calculations
+
+**Input** (`rectangle.taco`):
 ```taco
-a = 5
-b = 3
-c = a + b
+width = 10.5
+height = 7.3
+
+area = width * height
+print(area)
+
+perimeter = 2 * (width + height)
+print(perimeter)
 ```
 
-### TAC Intermediate Representation
+**Output**:
 ```
-0: a = 5
-1: b = 3
-2: t0 = a + b
-3: c = t0
+76.65
+35.6
+```
+
+**Energy Analysis**:
+```bash
+./taco --energy rectangle.taco
+# Total energy: 60 units
+# - Multiplication: 29.17%
+# - Addition: 12.50%
+# - I/O: 40.00%
+```
+
+## Build System
+
+```bash
+make           # Build compiler
+make clean     # Remove build artifacts
+make test      # Run basic tests
+```
+
+## Requirements
+
+- **g++** with C++14 support
+- **make**
+- **gcc** (for compiling generated C code)
+
+## Implementation Details
+
+### Three-Address Code
+
+TACO generates TAC where each instruction performs at most one operation:
+
+```taco
+result = (a + b) * (c - d)
+```
+
+Becomes:
+```
+t0 = a + b
+t1 = c - d
+t2 = t0 * t1
+result = t2
 ```
 
 ### Generated C Code
+
+All variables are declared as `double` with automatic temporary variable management:
+
 ```c
 int main() {
-    // User variables
-    double a = 0.0;
-    double b = 0.0;
-    double c = 0.0;
-
-    // Temporary variables
-    double t0 = 0.0;
-
-    // Program code
-    a = 5;
-    b = 3;
+    double a = 0.0, b = 0.0, result = 0.0;
+    double t0 = 0.0, t1 = 0.0;
+    
+    a = 10;
+    b = 20;
     t0 = a + b;
-    c = t0;
-
+    result = t0;
+    printf("%g\n", result);
+    
     return 0;
 }
 ```
 
-## Transform Implementations
+## Future Enhancements
 
-### FFT (Fast Fourier Transform)
-```bash
-./taco --tac --energy examples/fft.taco -o fft.c
-gcc fft.c -o fft -lm
-./fft
-```
-
-Implements a simplified 8-point Cooley-Tukey FFT algorithm.
-
-### DCT (Discrete Cosine Transform)
-```bash
-./taco --tac --energy examples/dct.taco -o dct.c
-gcc dct.c -o dct -lm
-./dct
-```
-
-Implements 8-point DCT Type-II (used in JPEG compression).
-
-## Energy Performance Analysis
-
-Compare energy consumption between FFT and DCT:
-
-```bash
-# FFT analysis
-./taco --energy examples/fft.taco
-
-# DCT analysis
-./taco --energy examples/dct.taco
-```
-
-Analysis reveals:
-- Comparative energy efficiency between transforms
-- Dominant operations in energy consumption
-- Potential optimization opportunities
+- Control flow statements (if/while/for)
+- Functions and scope
+- Type system
+- Arrays and data structures
+- Advanced optimizations
 
 ## License
 
-MIT License. Developed as part of an engineering thesis.
+MIT License
 

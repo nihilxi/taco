@@ -14,42 +14,12 @@ enum class TACOpcode
     SUB,        // t = a - b
     MUL,        // t = a * b
     DIV,        // t = a / b
-    MOD,        // t = a % b
-    NEG,        // t = -a
-    
-    // Logical
-    AND,        // t = a && b
-    OR,         // t = a || b
-    NOT,        // t = !a
-    
-    // Comparison
-    EQ,         // t = a == b
-    NEQ,        // t = a != b
-    LT,         // t = a < b
-    LTE,        // t = a <= b
-    GT,         // t = a > b
-    GTE,        // t = a >= b
     
     // Assignment
     ASSIGN,     // t = a
     
-    // Control flow
-    LABEL,      // label:
-    GOTO,       // goto label
-    IF_FALSE,   // if_false a goto label
-    IF_TRUE,    // if_true a goto label
-    
-    // Function
-    PARAM,      // param a
-    CALL,       // t = call func, n
-    RETURN,     // return a
-    
-    // Array
-    INDEX,      // t = a[i]
-    STORE,      // a[i] = t
-    
-    // Special
-    NOP         // no operation
+    // I/O
+    PRINT       // print a
 };
 
 // TAC Instruction

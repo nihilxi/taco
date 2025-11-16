@@ -15,47 +15,16 @@ enum class TokenType
     SUB,
     MUL,
     DIV,
-    MOD,
-    
-    // Comparison operators
-    EQ,         // ==
-    NEQ,        // !=
-    LT,         // <
-    LTE,        // <=
-    GT,         // >
-    GTE,        // >=
-    
-    // Logical operators
-    AND,        // &&
-    OR,         // ||
-    NOT,        // !
     
     // Assignment
     ASSIGN,     // =
     
     // Keywords
-    IF,
-    ELSE,
-    WHILE,
-    FOR,
-    RETURN,
-    INT,
-    FLOAT,
-    DOUBLE,
-    BOOL,
-    VOID,
-    TRUE,
-    FALSE,
+    PRINT,      // print
     
     // Delimiters
     LPAREN,     // (
     RPAREN,     // )
-    LBRACE,     // {
-    RBRACE,     // }
-    LBRACKET,   // [
-    RBRACKET,   // ]
-    SEMICOLON,  // ;
-    COMMA,      // ,
     
     END_OF_FILE
 };

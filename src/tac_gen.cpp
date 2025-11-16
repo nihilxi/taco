@@ -22,74 +22,13 @@ std::string TACInstruction::toString() const
         case TACOpcode::DIV:
             oss << result << " = " << arg1 << " / " << arg2;
             break;
-        case TACOpcode::MOD:
-            oss << result << " = " << arg1 << " % " << arg2;
-            break;
-        case TACOpcode::NEG:
-            oss << result << " = -" << arg1;
-            break;
-        case TACOpcode::AND:
-            oss << result << " = " << arg1 << " && " << arg2;
-            break;
-        case TACOpcode::OR:
-            oss << result << " = " << arg1 << " || " << arg2;
-            break;
-        case TACOpcode::NOT:
-            oss << result << " = !" << arg1;
-            break;
-        case TACOpcode::EQ:
-            oss << result << " = " << arg1 << " == " << arg2;
-            break;
-        case TACOpcode::NEQ:
-            oss << result << " = " << arg1 << " != " << arg2;
-            break;
-        case TACOpcode::LT:
-            oss << result << " = " << arg1 << " < " << arg2;
-            break;
-        case TACOpcode::LTE:
-            oss << result << " = " << arg1 << " <= " << arg2;
-            break;
-        case TACOpcode::GT:
-            oss << result << " = " << arg1 << " > " << arg2;
-            break;
-        case TACOpcode::GTE:
-            oss << result << " = " << arg1 << " >= " << arg2;
-            break;
         case TACOpcode::ASSIGN:
             oss << result << " = " << arg1;
             break;
-        case TACOpcode::LABEL:
-            oss << result << ":";
+        case TACOpcode::PRINT:
+            oss << "print " << arg1;
             break;
-        case TACOpcode::GOTO:
-            oss << "goto " << result;
-            break;
-        case TACOpcode::IF_FALSE:
-            oss << "if_false " << arg1 << " goto " << result;
-            break;
-        case TACOpcode::IF_TRUE:
-            oss << "if_true " << arg1 << " goto " << result;
-            break;
-        case TACOpcode::PARAM:
-            oss << "param " << arg1;
-            break;
-        case TACOpcode::CALL:
-            oss << result << " = call " << arg1 << ", " << arg2;
-            break;
-        case TACOpcode::RETURN:
-            if (!arg1.empty())
-                oss << "return " << arg1;
-            else
-                oss << "return";
-            break;
-        case TACOpcode::INDEX:
-            oss << result << " = " << arg1 << "[" << arg2 << "]";
-            break;
-        case TACOpcode::STORE:
-            oss << result << "[" << arg1 << "] = " << arg2;
-            break;
-        case TACOpcode::NOP:
-            oss << "nop";
+        default:
             break;
     }
     
@@ -146,16 +85,7 @@ std::string TACGenerator::generateExpression(const ASTNode* node)
                 case TokenType::SUB: opcode = TACOpcode::SUB; break;
                 case TokenType::MUL: opcode = TACOpcode::MUL; break;
                 case TokenType::DIV: opcode = TACOpcode::DIV; break;
-                case TokenType::MOD: opcode = TACOpcode::MOD; break;
-                case TokenType::EQ:  opcode = TACOpcode::EQ;  break;
-                case TokenType::NEQ: opcode = TACOpcode::NEQ; break;
-                case TokenType::LT:  opcode = TACOpcode::LT;  break;
-                case TokenType::LTE: opcode = TACOpcode::LTE; break;
-                case TokenType::GT:  opcode = TACOpcode::GT;  break;
-                case TokenType::GTE: opcode = TACOpcode::GTE; break;
-                case TokenType::AND: opcode = TACOpcode::AND; break;
-                case TokenType::OR:  opcode = TACOpcode::OR;  break;
-                default: opcode = TACOpcode::NOP; break;
+                default: return ""; // Unsupported operation
             }
             
             instructions.push_back(TACInstruction(opcode, temp, left, right));
@@ -180,6 +110,14 @@ void TACGenerator::generateStatement(const ASTNode* node)
             const AssignmentNode* assign = static_cast<const AssignmentNode*>(node);
             std::string expr = generateExpression(assign->expression.get());
             instructions.push_back(TACInstruction(TACOpcode::ASSIGN, assign->identifier, expr));
+            break;
+        }
+        
+        case ASTNodeType::PRINT:
+        {
+            const PrintNode* print = static_cast<const PrintNode*>(node);
+            std::string expr = generateExpression(print->expression.get());
+            instructions.push_back(TACInstruction(TACOpcode::PRINT, "", expr));
             break;
         }
         

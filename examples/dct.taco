@@ -13,91 +13,35 @@ x6 = 7
 x7 = 8
 
 // DCT coefficients (simplified, normally would use cos functions)
-// Using approximations for demonstration
 c0 = 0.707
 c1 = 0.924
 c2 = 0.383
 c3 = 0.195
 
-// Compute DCT[0] - DC component
-dc0 = x0 + x7
-dc1 = x1 + x6
-dc2 = x2 + x5
-dc3 = x3 + x4
-dct0 = dc0 + dc1 + dc2 + dc3
+// Compute DCT[0] - DC component (combined operations)
+dct0 = x0 + x7 + x1 + x6 + x2 + x5 + x3 + x4
 
-// Compute DCT[1]
-t10 = x0 - x7
-t11 = x1 - x6
-t12 = x2 - x5
-t13 = x3 - x4
-s10 = t10 * c1
-s11 = t11 * c2
-s12 = t12 * c3
-s13 = t13 * c0
-dct1 = s10 + s11 + s12 + s13
+// Compute DCT[1] (combined operations)
+dct1 = (x0 - x7) * c1 + (x1 - x6) * c2 + (x2 - x5) * c3 + (x3 - x4) * c0
 
-// Compute DCT[2]
-t20 = x0 + x7
-t21 = x1 + x6
-t22 = x2 + x5
-t23 = x3 + x4
-s20 = t20 * c0
-s21 = t21 * c1
-s22 = t22 * c2
-s23 = t23 * c3
-dct2 = s20 - s21 + s22 - s23
+// Compute DCT[2] (combined operations)
+dct2 = (x0 + x7) * c0 - (x1 + x6) * c1 + (x2 + x5) * c2 - (x3 + x4) * c3
 
-// Compute DCT[3]
-t30 = x0 - x7
-t31 = x1 - x6
-t32 = x2 - x5
-t33 = x3 - x4
-s30 = t30 * c3
-s31 = t31 * c0
-s32 = t32 * c1
-s33 = t33 * c2
-dct3 = s30 - s31 + s32 - s33
+// Compute DCT[3] (combined operations)
+dct3 = (x0 - x7) * c3 - (x1 - x6) * c0 + (x2 - x5) * c1 - (x3 - x4) * c2
 
-// Compute DCT[4]
-t40 = x0 + x7
-t41 = x1 + x6
-t42 = x2 + x5
-t43 = x3 + x4
-dct4 = t40 - t41 - t42 + t43
+// Compute DCT[4] (combined operations)
+dct4 = x0 + x7 - x1 - x6 - x2 - x5 + x3 + x4
 
-// Compute DCT[5]
-t50 = x0 - x7
-t51 = x1 - x6
-t52 = x2 - x5
-t53 = x3 - x4
-s50 = t50 * c2
-s51 = t51 * c3
-s52 = t52 * c0
-s53 = t53 * c1
-dct5 = s50 - s51 - s52 + s53
+// Compute DCT[5] (combined operations)
+dct5 = (x0 - x7) * c2 - (x1 - x6) * c3 - (x2 - x5) * c0 + (x3 - x4) * c1
 
-// Compute DCT[6]
-t60 = x0 + x7
-t61 = x1 + x6
-t62 = x2 + x5
-t63 = x3 + x4
-s60 = t60 * c3
-s61 = t61 * c2
-s62 = t62 * c1
-s63 = t63 * c0
-dct6 = s60 - s61 - s62 + s63
+// Compute DCT[6] (combined operations)
+dct6 = (x0 + x7) * c3 - (x1 + x6) * c2 - (x2 + x5) * c1 + (x3 + x4) * c0
 
-// Compute DCT[7]
-t70 = x0 - x7
-t71 = x1 - x6
-t72 = x2 - x5
-t73 = x3 - x4
-s70 = t70 * c0
-s71 = t71 * c1
-s72 = t72 * c2
-s73 = t73 * c3
-dct7 = s70 - s71 - s72 + s73
+// Compute DCT[7] (combined operations)
+dct7 = (x0 - x7) * c0 - (x1 - x6) * c1 - (x2 - x5) * c2 + (x3 - x4) * c3
 
 // Sum all DCT coefficients for verification
 result = dct0 + dct1 + dct2 + dct3 + dct4 + dct5 + dct6 + dct7
+print(result)

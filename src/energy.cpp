@@ -18,42 +18,12 @@ void EnergyModel::initializeEnergyTable()
     energyTable[TACOpcode::SUB] = {1.0, 0.5, "Integer subtraction"};
     energyTable[TACOpcode::MUL] = {3.0, 0.5, "Integer multiplication (higher latency)"};
     energyTable[TACOpcode::DIV] = {20.0, 0.5, "Integer division (very expensive)"};
-    energyTable[TACOpcode::MOD] = {20.0, 0.5, "Modulo operation (similar to division)"};
-    energyTable[TACOpcode::NEG] = {1.0, 0.5, "Negation"};
-    
-    // Logical operations
-    energyTable[TACOpcode::AND] = {1.0, 0.5, "Logical AND"};
-    energyTable[TACOpcode::OR] = {1.0, 0.5, "Logical OR"};
-    energyTable[TACOpcode::NOT] = {1.0, 0.5, "Logical NOT"};
-    
-    // Comparison operations
-    energyTable[TACOpcode::EQ] = {1.0, 0.5, "Equality comparison"};
-    energyTable[TACOpcode::NEQ] = {1.0, 0.5, "Inequality comparison"};
-    energyTable[TACOpcode::LT] = {1.0, 0.5, "Less than comparison"};
-    energyTable[TACOpcode::LTE] = {1.0, 0.5, "Less than or equal comparison"};
-    energyTable[TACOpcode::GT] = {1.0, 0.5, "Greater than comparison"};
-    energyTable[TACOpcode::GTE] = {1.0, 0.5, "Greater than or equal comparison"};
     
     // Assignment
     energyTable[TACOpcode::ASSIGN] = {0.5, 0.5, "Assignment (register move)"};
     
-    // Control flow (includes pipeline flush costs)
-    energyTable[TACOpcode::LABEL] = {0.0, 0.0, "Label (no cost)"};
-    energyTable[TACOpcode::GOTO] = {5.0, 0.0, "Unconditional jump (pipeline flush)"};
-    energyTable[TACOpcode::IF_FALSE] = {3.0, 0.5, "Conditional branch"};
-    energyTable[TACOpcode::IF_TRUE] = {3.0, 0.5, "Conditional branch"};
-    
-    // Function operations
-    energyTable[TACOpcode::PARAM] = {1.0, 1.0, "Parameter passing (stack/register)"};
-    energyTable[TACOpcode::CALL] = {10.0, 2.0, "Function call (context switch)"};
-    energyTable[TACOpcode::RETURN] = {5.0, 1.0, "Function return"};
-    
-    // Array operations (memory intensive)
-    energyTable[TACOpcode::INDEX] = {2.0, 3.0, "Array indexing (memory access)"};
-    energyTable[TACOpcode::STORE] = {2.0, 3.0, "Array store (memory write)"};
-    
-    // Special
-    energyTable[TACOpcode::NOP] = {0.1, 0.0, "No operation"};
+    // I/O
+    energyTable[TACOpcode::PRINT] = {10.0, 2.0, "Print output (I/O operation)"};
 }
 
 // Get energy cost for a single instruction

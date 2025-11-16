@@ -15,8 +15,7 @@ x5 = 6
 x6 = 7
 x7 = 8
 
-// Stage 1: Butterfly operations
-// First layer of butterflies
+// Stage 1: Butterfly operations - First layer
 t0 = x0 + x4
 t1 = x1 + x5
 t2 = x2 + x6
@@ -26,8 +25,7 @@ t5 = x1 - x5
 t6 = x2 - x6
 t7 = x3 - x7
 
-// Stage 2: Butterfly operations
-// Second layer
+// Stage 2: Butterfly operations - Second layer
 s0 = t0 + t2
 s1 = t1 + t3
 s2 = t0 - t2
@@ -37,8 +35,7 @@ s5 = t5 + t7
 s6 = t4 - t6
 s7 = t5 - t7
 
-// Stage 3: Final butterfly operations
-// Third layer
+// Stage 3: Final butterfly operations - Third layer with combined result
 r0 = s0 + s1
 r1 = s0 - s1
 r2 = s2 + s3
@@ -48,5 +45,6 @@ r5 = s4 - s5
 r6 = s6 + s7
 r7 = s6 - s7
 
-// Results are in r0 through r7
+// Combine all results in one expression
 result = r0 + r1 + r2 + r3 + r4 + r5 + r6 + r7
+print(result)

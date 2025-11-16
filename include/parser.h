@@ -12,7 +12,8 @@ enum class ASTNodeType
     ASSIGNMENT,
     BINARY_OP,
     IDENTIFIER,
-    NUMBER
+    NUMBER,
+    PRINT
 };
 
 // Base AST Node
@@ -69,6 +70,18 @@ struct AssignmentNode : public ASTNode
     }
 };
 
+// Print Node
+struct PrintNode : public ASTNode
+{
+    std::unique_ptr<ASTNode> expression;
+    
+    PrintNode(std::unique_ptr<ASTNode> expr)
+        : expression(std::move(expr))
+    {
+        type = ASTNodeType::PRINT;
+    }
+};
+
 // Parser Class
 class Parser
 {
@@ -85,6 +98,8 @@ private:
     std::unique_ptr<ASTNode> parseTerm();
     std::unique_ptr<ASTNode> parseExpression();
     std::unique_ptr<ASTNode> parseAssignment();
+    std::unique_ptr<ASTNode> parsePrint();
+    std::unique_ptr<ASTNode> parseStatement();
 
 public:
     Parser(const std::vector<Token> &tokens);

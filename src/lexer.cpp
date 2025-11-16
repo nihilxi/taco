@@ -85,21 +85,15 @@ std::vector<Token> lexing(const std::string &source_code)
             i--;
             
             // Check for keywords
-            TokenType type = TokenType::IDENTIFIER;
-            if (identifier == "if") type = TokenType::IF;
-            else if (identifier == "else") type = TokenType::ELSE;
-            else if (identifier == "while") type = TokenType::WHILE;
-            else if (identifier == "for") type = TokenType::FOR;
-            else if (identifier == "return") type = TokenType::RETURN;
-            else if (identifier == "int") type = TokenType::INT;
-            else if (identifier == "float") type = TokenType::FLOAT;
-            else if (identifier == "double") type = TokenType::DOUBLE;
-            else if (identifier == "bool") type = TokenType::BOOL;
-            else if (identifier == "void") type = TokenType::VOID;
-            else if (identifier == "true") type = TokenType::TRUE;
-            else if (identifier == "false") type = TokenType::FALSE;
-            
-            tokens.push_back({type, identifier, line, start_col});
+            if (identifier == "print")
+            {
+                tokens.push_back({TokenType::PRINT, identifier, line, start_col});
+            }
+            else
+            {
+                // All other identifiers remain as IDENTIFIER
+                tokens.push_back({TokenType::IDENTIFIER, identifier, line, start_col});
+            }
         }
         // Number
         else if (isdigit(symbol))
@@ -138,78 +132,10 @@ std::vector<Token> lexing(const std::string &source_code)
             tokens.push_back({TokenType::DIV, "/", line, column});
             column++;
         }
-        else if (symbol == '%')
-        {
-            tokens.push_back({TokenType::MOD, "%", line, column});
-            column++;
-        }
         else if (symbol == '=')
         {
-            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
-            {
-                tokens.push_back({TokenType::EQ, "==", line, column});
-                i++;
-                column += 2;
-            }
-            else
-            {
-                tokens.push_back({TokenType::ASSIGN, "=", line, column});
-                column++;
-            }
-        }
-        else if (symbol == '!')
-        {
-            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
-            {
-                tokens.push_back({TokenType::NEQ, "!=", line, column});
-                i++;
-                column += 2;
-            }
-            else
-            {
-                tokens.push_back({TokenType::NOT, "!", line, column});
-                column++;
-            }
-        }
-        else if (symbol == '<')
-        {
-            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
-            {
-                tokens.push_back({TokenType::LTE, "<=", line, column});
-                i++;
-                column += 2;
-            }
-            else
-            {
-                tokens.push_back({TokenType::LT, "<", line, column});
-                column++;
-            }
-        }
-        else if (symbol == '>')
-        {
-            if (i + 1 < source_code.size() && source_code[i + 1] == '=')
-            {
-                tokens.push_back({TokenType::GTE, ">=", line, column});
-                i++;
-                column += 2;
-            }
-            else
-            {
-                tokens.push_back({TokenType::GT, ">", line, column});
-                column++;
-            }
-        }
-        else if (symbol == '&' && i + 1 < source_code.size() && source_code[i + 1] == '&')
-        {
-            tokens.push_back({TokenType::AND, "&&", line, column});
-            i++;
-            column += 2;
-        }
-        else if (symbol == '|' && i + 1 < source_code.size() && source_code[i + 1] == '|')
-        {
-            tokens.push_back({TokenType::OR, "||", line, column});
-            i++;
-            column += 2;
+            tokens.push_back({TokenType::ASSIGN, "=", line, column});
+            column++;
         }
         else if (symbol == '(')
         {
@@ -219,36 +145,6 @@ std::vector<Token> lexing(const std::string &source_code)
         else if (symbol == ')')
         {
             tokens.push_back({TokenType::RPAREN, ")", line, column});
-            column++;
-        }
-        else if (symbol == '{')
-        {
-            tokens.push_back({TokenType::LBRACE, "{", line, column});
-            column++;
-        }
-        else if (symbol == '}')
-        {
-            tokens.push_back({TokenType::RBRACE, "}", line, column});
-            column++;
-        }
-        else if (symbol == '[')
-        {
-            tokens.push_back({TokenType::LBRACKET, "[", line, column});
-            column++;
-        }
-        else if (symbol == ']')
-        {
-            tokens.push_back({TokenType::RBRACKET, "]", line, column});
-            column++;
-        }
-        else if (symbol == ';')
-        {
-            tokens.push_back({TokenType::SEMICOLON, ";", line, column});
-            column++;
-        }
-        else if (symbol == ',')
-        {
-            tokens.push_back({TokenType::COMMA, ",", line, column});
             column++;
         }
         else

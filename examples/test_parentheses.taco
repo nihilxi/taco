@@ -1,0 +1,6 @@
+// Test parentheses and decimal numbers
+a = 2.5
+b = 3.14
+c = (a + b) * 2
+d = 10 / (2 + 3)
+result = (a + b) * (c - d)

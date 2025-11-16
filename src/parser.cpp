@@ -41,10 +41,24 @@ bool Parser::match(TokenType type)
     return false;
 }
 
-// Parse primary expressions (numbers and identifiers)
+// Parse primary expressions (numbers, identifiers, and parenthesized expressions)
 std::unique_ptr<ASTNode> Parser::parsePrimary()
 {
     Token token = peek();
+    
+    // Handle parenthesized expressions
+    if (token.type == TokenType::LPAREN)
+    {
+        advance(); // consume '('
+        auto expr = parseExpression();
+        
+        if (!match(TokenType::RPAREN))
+        {
+            std::cerr << "Error: Expected ')' at line " << peek().line << std::endl;
+        }
+        
+        return expr;
+    }
     
     if (token.type == TokenType::NUMBER)
     {
@@ -117,6 +131,46 @@ std::unique_ptr<ASTNode> Parser::parseAssignment()
     return nullptr;
 }
 
+// Parse print statement
+std::unique_ptr<ASTNode> Parser::parsePrint()
+{
+    advance(); // consume 'print'
+    
+    if (!match(TokenType::LPAREN))
+    {
+        std::cerr << "Error: Expected '(' after 'print' at line " << peek().line << std::endl;
+        return nullptr;
+    }
+    
+    auto expression = parseExpression();
+    
+    if (!match(TokenType::RPAREN))
+    {
+        std::cerr << "Error: Expected ')' after expression at line " << peek().line << std::endl;
+        return nullptr;
+    }
+    
+    return std::make_unique<PrintNode>(std::move(expression));
+}
+
+// Parse a statement (assignment or print)
+std::unique_ptr<ASTNode> Parser::parseStatement()
+{
+    Token token = peek();
+    
+    if (token.type == TokenType::PRINT)
+    {
+        return parsePrint();
+    }
+    else if (token.type == TokenType::IDENTIFIER)
+    {
+        return parseAssignment();
+    }
+    
+    std::cerr << "Error: Expected statement at line " << token.line << std::endl;
+    return nullptr;
+}
+
 // Parse the entire program
 std::vector<std::unique_ptr<ASTNode>> Parser::parse()
 {
@@ -124,7 +178,7 @@ std::vector<std::unique_ptr<ASTNode>> Parser::parse()
     
     while (!check(TokenType::END_OF_FILE))
     {
-        auto statement = parseAssignment();
+        auto statement = parseStatement();
         if (statement)
         {
             statements.push_back(std::move(statement));
@@ -182,6 +236,13 @@ void Parser::printAST(const ASTNode* node, int indent)
             const AssignmentNode* assign = static_cast<const AssignmentNode*>(node);
             std::cout << indentation << "Assignment: " << assign->identifier << std::endl;
             printAST(assign->expression.get(), indent + 1);
+            break;
+        }
+        case ASTNodeType::PRINT:
+        {
+            const PrintNode* print = static_cast<const PrintNode*>(node);
+            std::cout << indentation << "Print:" << std::endl;
+            printAST(print->expression.get(), indent + 1);
             break;
         }
     }

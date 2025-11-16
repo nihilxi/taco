@@ -14,7 +14,7 @@ void CCodeGenerator::collectVariables(const std::vector<TACInstruction>& tac)
     for (const auto& instr : tac)
     {
         // Collect result variable
-        if (!instr.result.empty() && instr.opcode != TACOpcode::LABEL && instr.opcode != TACOpcode::GOTO)
+        if (!instr.result.empty())
         {
             if (instr.result[0] == 't')
                 temporaries.insert(instr.result);
@@ -23,16 +23,15 @@ void CCodeGenerator::collectVariables(const std::vector<TACInstruction>& tac)
         }
         
         // Collect argument variables
-        if (!instr.arg1.empty() && !isdigit(instr.arg1[0]) && instr.arg1 != "true" && instr.arg1 != "false")
+        if (!instr.arg1.empty() && !isdigit(instr.arg1[0]))
         {
             if (instr.arg1[0] == 't')
                 temporaries.insert(instr.arg1);
-            else if (instr.opcode != TACOpcode::CALL && instr.opcode != TACOpcode::GOTO && 
-                     instr.opcode != TACOpcode::IF_FALSE && instr.opcode != TACOpcode::IF_TRUE)
+            else
                 variables.insert(instr.arg1);
         }
         
-        if (!instr.arg2.empty() && !isdigit(instr.arg2[0]) && instr.arg2 != "true" && instr.arg2 != "false")
+        if (!instr.arg2.empty() && !isdigit(instr.arg2[0]))
         {
             if (instr.arg2[0] == 't')
                 temporaries.insert(instr.arg2);
@@ -91,62 +90,11 @@ std::string CCodeGenerator::generateInstruction(const TACInstruction& instr)
         case TACOpcode::DIV:
             oss << "    " << instr.result << " = " << instr.arg1 << " / " << instr.arg2 << ";";
             break;
-        case TACOpcode::MOD:
-            oss << "    " << instr.result << " = (int)" << instr.arg1 << " % (int)" << instr.arg2 << ";";
-            break;
-        case TACOpcode::NEG:
-            oss << "    " << instr.result << " = -" << instr.arg1 << ";";
-            break;
-        case TACOpcode::AND:
-            oss << "    " << instr.result << " = " << instr.arg1 << " && " << instr.arg2 << ";";
-            break;
-        case TACOpcode::OR:
-            oss << "    " << instr.result << " = " << instr.arg1 << " || " << instr.arg2 << ";";
-            break;
-        case TACOpcode::NOT:
-            oss << "    " << instr.result << " = !" << instr.arg1 << ";";
-            break;
-        case TACOpcode::EQ:
-            oss << "    " << instr.result << " = " << instr.arg1 << " == " << instr.arg2 << ";";
-            break;
-        case TACOpcode::NEQ:
-            oss << "    " << instr.result << " = " << instr.arg1 << " != " << instr.arg2 << ";";
-            break;
-        case TACOpcode::LT:
-            oss << "    " << instr.result << " = " << instr.arg1 << " < " << instr.arg2 << ";";
-            break;
-        case TACOpcode::LTE:
-            oss << "    " << instr.result << " = " << instr.arg1 << " <= " << instr.arg2 << ";";
-            break;
-        case TACOpcode::GT:
-            oss << "    " << instr.result << " = " << instr.arg1 << " > " << instr.arg2 << ";";
-            break;
-        case TACOpcode::GTE:
-            oss << "    " << instr.result << " = " << instr.arg1 << " >= " << instr.arg2 << ";";
-            break;
         case TACOpcode::ASSIGN:
             oss << "    " << instr.result << " = " << instr.arg1 << ";";
             break;
-        case TACOpcode::LABEL:
-            oss << instr.result << ":";
-            break;
-        case TACOpcode::GOTO:
-            oss << "    goto " << instr.result << ";";
-            break;
-        case TACOpcode::IF_FALSE:
-            oss << "    if (!" << instr.arg1 << ") goto " << instr.result << ";";
-            break;
-        case TACOpcode::IF_TRUE:
-            oss << "    if (" << instr.arg1 << ") goto " << instr.result << ";";
-            break;
-        case TACOpcode::RETURN:
-            if (!instr.arg1.empty())
-                oss << "    return " << instr.arg1 << ";";
-            else
-                oss << "    return 0;";
-            break;
-        case TACOpcode::NOP:
-            oss << "    // nop";
+        case TACOpcode::PRINT:
+            oss << "    printf(\"%g\\n\", " << instr.arg1 << ");";
             break;
         default:
             oss << "    // Unsupported instruction";
