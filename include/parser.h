@@ -104,7 +104,7 @@ private:
 public:
     Parser(const std::vector<Token> &tokens);
     std::vector<std::unique_ptr<ASTNode>> parse();
-    void printAST(const ASTNode* node, int indent = 0);
+    void printAST(const ASTNode* node, int indent = 0, bool toConsole = false);
 };
 
 #endif // PARSER_H

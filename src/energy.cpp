@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include "../include/energy.h"
+#include "../include/logger.h"
 
 // Constructor
 EnergyModel::EnergyModel()
@@ -53,8 +54,8 @@ double EnergyModel::calculateProgramEnergy(const std::vector<TACInstruction>& ta
 // Print detailed energy report
 void EnergyModel::printEnergyReport(const std::vector<TACInstruction>& tac) const
 {
-    std::cout << "\n=== ENERGY CONSUMPTION REPORT ===" << std::endl;
-    std::cout << std::fixed << std::setprecision(2);
+    logger << "\n=== ENERGY CONSUMPTION REPORT ===" << std::endl;
+    logger << std::fixed << std::setprecision(2);
     
     // Count instructions by type
     std::map<TACOpcode, int> instructionCounts;
@@ -67,14 +68,14 @@ void EnergyModel::printEnergyReport(const std::vector<TACInstruction>& tac) cons
     }
     
     // Print summary
-    std::cout << "\nInstruction-wise breakdown:" << std::endl;
-    std::cout << std::string(80, '-') << std::endl;
-    std::cout << std::left << std::setw(25) << "Instruction Type"
+    logger << "\nInstruction-wise breakdown:" << std::endl;
+    logger << std::string(80, '-') << std::endl;
+    logger << std::left << std::setw(25) << "Instruction Type"
               << std::setw(10) << "Count"
               << std::setw(15) << "Unit Cost"
               << std::setw(15) << "Total Cost"
               << std::setw(15) << "% of Total" << std::endl;
-    std::cout << std::string(80, '-') << std::endl;
+    logger << std::string(80, '-') << std::endl;
     
     double totalEnergy = calculateProgramEnergy(tac);
     
@@ -87,7 +88,7 @@ void EnergyModel::printEnergyReport(const std::vector<TACInstruction>& tac) cons
             double typeCost = energyByType[entry.first];
             double percentage = (typeCost / totalEnergy) * 100.0;
             
-            std::cout << std::left << std::setw(25) << it->second.description
+            logger << std::left << std::setw(25) << it->second.description
                       << std::setw(10) << entry.second
                       << std::setw(15) << unitCost
                       << std::setw(15) << typeCost
@@ -95,26 +96,26 @@ void EnergyModel::printEnergyReport(const std::vector<TACInstruction>& tac) cons
         }
     }
     
-    std::cout << std::string(80, '-') << std::endl;
-    std::cout << "Total instructions: " << tac.size() << std::endl;
-    std::cout << "Total energy cost: " << totalEnergy << " units" << std::endl;
-    std::cout << "Average cost per instruction: " << (totalEnergy / tac.size()) << " units" << std::endl;
+    logger << std::string(80, '-') << std::endl;
+    logger << "Total instructions: " << tac.size() << std::endl;
+    logger << "Total energy cost: " << totalEnergy << " units" << std::endl;
+    logger << "Average cost per instruction: " << (totalEnergy / tac.size()) << " units" << std::endl;
 }
 
 // Print energy cost table
 void EnergyModel::printEnergyTable() const
 {
-    std::cout << "\n=== ENERGY COST TABLE ===" << std::endl;
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << std::left << std::setw(30) << "Operation"
+    logger << "\n=== ENERGY COST TABLE ===" << std::endl;
+    logger << std::fixed << std::setprecision(2);
+    logger << std::left << std::setw(30) << "Operation"
               << std::setw(12) << "Base Cost"
               << std::setw(12) << "Mem Cost"
               << std::setw(12) << "Total" << std::endl;
-    std::cout << std::string(66, '-') << std::endl;
+    logger << std::string(66, '-') << std::endl;
     
     for (const auto& entry : energyTable)
     {
-        std::cout << std::left << std::setw(30) << entry.second.description
+        logger << std::left << std::setw(30) << entry.second.description
                   << std::setw(12) << entry.second.baseCost
                   << std::setw(12) << entry.second.memoryAccess
                   << std::setw(12) << (entry.second.baseCost + entry.second.memoryAccess)
@@ -148,21 +149,21 @@ void EnergyProfiler::reset()
 
 void EnergyProfiler::printProfile() const
 {
-    std::cout << "\n=== ENERGY PROFILE ===" << std::endl;
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << std::left << std::setw(25) << "Operation"
+    logger << "\n=== ENERGY PROFILE ===" << std::endl;
+    logger << std::fixed << std::setprecision(2);
+    logger << std::left << std::setw(25) << "Operation"
               << std::setw(15) << "Executions"
               << std::setw(15) << "Total Energy" << std::endl;
-    std::cout << std::string(55, '-') << std::endl;
+    logger << std::string(55, '-') << std::endl;
     
     for (const auto& entry : profiles)
     {
-        std::cout << std::left << std::setw(25) << static_cast<int>(entry.first)
+        logger << std::left << std::setw(25) << static_cast<int>(entry.first)
                   << std::setw(15) << entry.second.executionCount
                   << std::setw(15) << entry.second.totalEnergy << std::endl;
     }
     
-    std::cout << std::string(55, '-') << std::endl;
+    logger << std::string(55, '-') << std::endl;
     std::cout << "Total energy: " << getTotalEnergy() << " units" << std::endl;
 }
 

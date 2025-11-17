@@ -14,6 +14,7 @@ PARSER_SRC = $(SRC_DIR)/parser.cpp
 TAC_SRC = $(SRC_DIR)/tac_gen.cpp
 ENERGY_SRC = $(SRC_DIR)/energy.cpp
 CODEGEN_SRC = $(SRC_DIR)/codegen.cpp
+LOGGER_SRC = $(SRC_DIR)/logger.cpp
 MAIN_SRC = $(SRC_DIR)/main.cpp
 
 # Object files
@@ -22,10 +23,11 @@ PARSER_OBJ = $(OBJ_DIR)/parser.o
 TAC_OBJ = $(OBJ_DIR)/tac_gen.o
 ENERGY_OBJ = $(OBJ_DIR)/energy.o
 CODEGEN_OBJ = $(OBJ_DIR)/codegen.o
+LOGGER_OBJ = $(OBJ_DIR)/logger.o
 MAIN_OBJ = $(OBJ_DIR)/main.o
 
 # All object files
-ALL_OBJS = $(LEXER_OBJ) $(PARSER_OBJ) $(TAC_OBJ) $(ENERGY_OBJ) $(CODEGEN_OBJ) $(MAIN_OBJ)
+ALL_OBJS = $(LEXER_OBJ) $(PARSER_OBJ) $(TAC_OBJ) $(ENERGY_OBJ) $(CODEGEN_OBJ) $(LOGGER_OBJ) $(MAIN_OBJ)
 
 # Default target
 all: $(TACO)
@@ -43,19 +45,22 @@ $(TACO): $(ALL_OBJS)
 $(LEXER_OBJ): $(LEXER_SRC) $(INCLUDE_DIR)/lexer.h | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $(LEXER_OBJ) $(LEXER_SRC)
 
-$(PARSER_OBJ): $(PARSER_SRC) $(INCLUDE_DIR)/parser.h $(INCLUDE_DIR)/lexer.h | $(OBJ_DIR)
+$(PARSER_OBJ): $(PARSER_SRC) $(INCLUDE_DIR)/parser.h $(INCLUDE_DIR)/lexer.h $(INCLUDE_DIR)/logger.h | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $(PARSER_OBJ) $(PARSER_SRC)
 
-$(TAC_OBJ): $(TAC_SRC) $(INCLUDE_DIR)/tac.h $(INCLUDE_DIR)/parser.h | $(OBJ_DIR)
+$(TAC_OBJ): $(TAC_SRC) $(INCLUDE_DIR)/tac.h $(INCLUDE_DIR)/parser.h $(INCLUDE_DIR)/logger.h | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $(TAC_OBJ) $(TAC_SRC)
 
-$(ENERGY_OBJ): $(ENERGY_SRC) $(INCLUDE_DIR)/energy.h $(INCLUDE_DIR)/tac.h | $(OBJ_DIR)
+$(ENERGY_OBJ): $(ENERGY_SRC) $(INCLUDE_DIR)/energy.h $(INCLUDE_DIR)/tac.h $(INCLUDE_DIR)/logger.h | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $(ENERGY_OBJ) $(ENERGY_SRC)
 
 $(CODEGEN_OBJ): $(CODEGEN_SRC) $(INCLUDE_DIR)/codegen.h $(INCLUDE_DIR)/tac.h | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $(CODEGEN_OBJ) $(CODEGEN_SRC)
 
-$(MAIN_OBJ): $(MAIN_SRC) $(INCLUDE_DIR)/lexer.h $(INCLUDE_DIR)/parser.h $(INCLUDE_DIR)/tac.h $(INCLUDE_DIR)/energy.h $(INCLUDE_DIR)/codegen.h | $(OBJ_DIR)
+$(LOGGER_OBJ): $(LOGGER_SRC) $(INCLUDE_DIR)/logger.h | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c -o $(LOGGER_OBJ) $(LOGGER_SRC)
+
+$(MAIN_OBJ): $(MAIN_SRC) $(INCLUDE_DIR)/lexer.h $(INCLUDE_DIR)/parser.h $(INCLUDE_DIR)/tac.h $(INCLUDE_DIR)/energy.h $(INCLUDE_DIR)/codegen.h $(INCLUDE_DIR)/logger.h | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $(MAIN_OBJ) $(MAIN_SRC)
 
 # Test targets
@@ -98,20 +103,42 @@ clean:
 	rm -f core
 	rm -f *~
 	rm -f .*.swp .*.swo
+	rm -f *.log
 	@echo "Cleaned all build artifacts and temporary files!"
+
+# Benchmark targets
+benchmark: $(TACO)
+	@echo "Running TACO Compiler Benchmark Suite..."
+	@python3 benchmarks/benchmark.py --taco $(TACO)
+
+benchmark-quick: $(TACO)
+	@echo "Running quick benchmark (1 iteration)..."
+	@python3 benchmarks/benchmark.py --taco $(TACO) --iterations 1
+
+benchmark-detailed: $(TACO)
+	@echo "Running detailed benchmark (10 iterations)..."
+	@python3 benchmarks/benchmark.py --taco $(TACO) --iterations 10
+
+benchmark-clean:
+	rm -rf benchmarks/results/*
+	@echo "Cleaned benchmark results!"
 
 # Show help
 help:
 	@echo "TACO Compiler Makefile"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all        - Build the TACO compiler (default)"
-	@echo "  test       - Run simple test"
-	@echo "  test-fft   - Run FFT test"
-	@echo "  test-dct   - Run DCT test"
-	@echo "  test-all   - Run all tests"
-	@echo "  clean      - Remove all build artifacts"
-	@echo "  help       - Show this help message"
+	@echo "  all               - Build the TACO compiler (default)"
+	@echo "  test              - Run simple test"
+	@echo "  test-fft          - Run FFT test"
+	@echo "  test-dct          - Run DCT test"
+	@echo "  test-all          - Run all tests"
+	@echo "  benchmark         - Run benchmark suite (5 iterations)"
+	@echo "  benchmark-quick   - Run quick benchmark (1 iteration)"
+	@echo "  benchmark-detailed - Run detailed benchmark (10 iterations)"
+	@echo "  benchmark-clean   - Clean benchmark results"
+	@echo "  clean             - Remove all build artifacts"
+	@echo "  help              - Show this help message"
 
-.PHONY: all test test-fft test-dct test-all clean help
+.PHONY: all test test-fft test-dct test-all benchmark benchmark-quick benchmark-detailed benchmark-clean clean help
 

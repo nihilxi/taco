@@ -6,6 +6,7 @@
 #include "../include/tac.h"
 #include "../include/energy.h"
 #include "../include/codegen.h"
+#include "../include/logger.h"
 
 void printUsage(const char* program)
 {
@@ -19,6 +20,7 @@ void printUsage(const char* program)
     std::cout << "  --energy-table    Show energy cost table\n";
     std::cout << "  -o <file>         Output executable file (default: output)\n";
     std::cout << "  --c-only          Generate only C code without compiling\n";
+    std::cout << "  --log <file>      Output log file (default: compilation.log)\n";
     std::cout << "  --help            Show this help message\n";
 }
 
@@ -38,6 +40,7 @@ int main(int argc, char *argv[])
     bool showEnergyTable = false;
     bool cOnly = false;
     std::string outputFile = "output";
+    std::string logFile = "compilation.log";
     std::string inputFile;
 
     for (int i = 1; i < argc; i++)
@@ -77,6 +80,10 @@ int main(int argc, char *argv[])
         {
             outputFile = argv[++i];
         }
+        else if (arg == "--log" && i + 1 < argc)
+        {
+            logFile = argv[++i];
+        }
         else if (arg[0] != '-')
         {
             inputFile = arg;
@@ -98,6 +105,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Open log file
+    if (!logger.open(logFile))
+    {
+        std::cerr << "Error: Could not open log file: " << logFile << std::endl;
+        return 1;
+    }
+    std::cout << "Logging to: " << logFile << std::endl;
+
     // Read source file
     std::ifstream sourceFile(inputFile);
     if (!sourceFile.is_open())
@@ -114,98 +129,131 @@ int main(int argc, char *argv[])
     }
     sourceFile.close();
 
-    std::cout << "Compiling: " << inputFile << "\n\n";
+    logger << "Compiling: " << inputFile << "\n\n";
 
     // 1. Lexical Analysis
+    logger.startTimer();
     std::vector<Token> tokens = lexing(sourceCode);
+    logger.endTimer("Lexical Analysis");
     
     if (showTokens)
     {
-        std::cout << "=== TOKENS ===" << std::endl;
+        logger << "=== TOKENS ===" << std::endl;
         for (const auto &token : tokens)
         {
             if (token.type == TokenType::END_OF_FILE)
                 break;
-            std::cout << "Line " << token.line << ":" << token.column 
-                      << " - " << token.value << std::endl;
+            logger << "Line " << token.line << ":" << token.column 
+                   << " - " << token.value << std::endl;
         }
-        std::cout << std::endl;
+        logger << std::endl;
     }
 
     // 2. Syntax Analysis (Parsing)
+    logger.startTimer();
     Parser parser(tokens);
     auto ast = parser.parse();
+    logger.endTimer("Syntax Analysis (Parsing)");
     
+    // Always print AST to logs
+    logger << "=== ABSTRACT SYNTAX TREE ===" << std::endl;
+    for (const auto &statement : ast)
+    {
+        parser.printAST(statement.get(), 0, false);
+    }
+    logger << std::endl;
+    
+    // Also print to console if flag is set
     if (showAST)
     {
         std::cout << "=== ABSTRACT SYNTAX TREE ===" << std::endl;
         for (const auto &statement : ast)
         {
-            parser.printAST(statement.get());
+            parser.printAST(statement.get(), 0, true);
         }
         std::cout << std::endl;
     }
 
     // 3. TAC Generation
+    logger.startTimer();
     TACGenerator tacGen;
     std::vector<TACInstruction> tac = tacGen.generate(ast);
+    logger.endTimer("TAC Generation");
     
+    // Always print TAC to logs
+    tacGen.printTAC(tac, false);
+    logger << std::endl;
+    
+    // Also print to console if flag is set
     if (showTAC)
     {
-        tacGen.printTAC(tac);
+        tacGen.printTAC(tac, true);
         std::cout << std::endl;
     }
 
     // 4. Energy Analysis
+    logger.startTimer();
     EnergyModel energyModel;
     
     if (showEnergyTable)
     {
         energyModel.printEnergyTable();
-        std::cout << std::endl;
+        logger << std::endl;
     }
     
     if (showEnergy)
     {
         energyModel.printEnergyReport(tac);
-        std::cout << std::endl;
+        logger << std::endl;
     }
+    logger.endTimer("Energy Analysis");
 
     // 5. Code Generation (C)
+    logger.startTimer();
     CCodeGenerator codeGen;
     std::string cCode = codeGen.generate(tac);
     
     std::string cFilename = outputFile + ".c";
     codeGen.writeToFile(cCode, cFilename);
+    logger.endTimer("C Code Generation");
 
     // 6. Compile to executable (unless --c-only flag is set)
     if (!cOnly)
     {
+        logger.startTimer();
         if (codeGen.compileToExecutable(cFilename, outputFile))
         {
-            std::cout << "\nCompilation successful!\n";
-            std::cout << "Executable: " << outputFile << std::endl;
+            logger.endTimer("C to Executable Compilation");
+            logger << "\nCompilation successful!\n";
+            logger << "Executable: " << outputFile << std::endl;
         }
         else
         {
-            std::cerr << "\nExecutable creation failed!\n";
-            std::cerr << "C code is available in: " << cFilename << std::endl;
+            logger.endTimer("C to Executable Compilation");
+            logger << "\nExecutable creation failed!\n";
+            logger << "C code is available in: " << cFilename << std::endl;
             return 1;
         }
     }
     else
     {
-        std::cout << "\nC code generation successful!\n";
-        std::cout << "Output: " << cFilename << std::endl;
+        logger << "\nC code generation successful!\n";
+        logger << "Output: " << cFilename << std::endl;
     }
     
     // Print summary
-    std::cout << "\n=== COMPILATION SUMMARY ===" << std::endl;
-    std::cout << "Tokens: " << tokens.size() << std::endl;
-    std::cout << "AST nodes: " << ast.size() << std::endl;
-    std::cout << "TAC instructions: " << tac.size() << std::endl;
-    std::cout << "Estimated energy cost: " << energyModel.calculateProgramEnergy(tac) 
-              << " units" << std::endl;
+    logger << "\n=== COMPILATION SUMMARY ===" << std::endl;
+    logger << "Tokens: " << tokens.size() << std::endl;
+    logger << "AST nodes: " << ast.size() << std::endl;
+    logger << "TAC instructions: " << tac.size() << std::endl;
+    logger << "Estimated energy cost: " << energyModel.calculateProgramEnergy(tac) 
+           << " units" << std::endl;
+    
+    // Print timing report
+    logger.printTimingReport();
 
+    logger.close();
+    std::cout << "\nCompilation complete. Log saved to: " << logFile << std::endl;
+    
     return 0;
 }

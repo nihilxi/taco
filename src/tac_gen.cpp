@@ -2,6 +2,7 @@
 #include <sstream>
 #include "../include/tac.h"
 #include "../include/parser.h"
+#include "../include/logger.h"
 
 // Convert TAC instruction to string
 std::string TACInstruction::toString() const
@@ -142,12 +143,24 @@ std::vector<TACInstruction> TACGenerator::generate(const std::vector<std::unique
 }
 
 // Print TAC
-void TACGenerator::printTAC(const std::vector<TACInstruction>& tac)
+void TACGenerator::printTAC(const std::vector<TACInstruction>& tac, bool toConsole)
 {
-    std::cout << "=== THREE-ADDRESS CODE ===" << std::endl;
-    int line = 0;
-    for (const auto& instr : tac)
+    if (toConsole)
     {
-        std::cout << line++ << ": " << instr.toString() << std::endl;
+        std::cout << "=== THREE-ADDRESS CODE ===" << std::endl;
+        int line = 1;
+        for (const auto& instr : tac)
+        {
+            std::cout << line++ << ": " << instr.toString() << std::endl;
+        }
+    }
+    else
+    {
+        logger << "=== THREE-ADDRESS CODE ===" << std::endl;
+        int line = 1;
+        for (const auto& instr : tac)
+        {
+            logger << line++ << ": " << instr.toString() << std::endl;
+        }
     }
 }

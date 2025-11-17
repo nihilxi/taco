@@ -167,7 +167,35 @@ print(perimeter)
 make           # Build compiler
 make clean     # Remove build artifacts
 make test      # Run basic tests
+make benchmark # Run performance benchmarks
 ```
+
+## Benchmarking
+
+The TACO compiler includes a comprehensive benchmark suite for performance analysis:
+
+```bash
+# Run standard benchmark (5 iterations)
+make benchmark
+
+# Quick benchmark (1 iteration)
+make benchmark-quick
+
+# Detailed benchmark (10 iterations)
+make benchmark-detailed
+
+# View results
+cat benchmarks/results/latest.txt
+```
+
+The benchmark suite measures:
+- **Compilation time** - How fast the compiler processes code
+- **TAC instruction count** - Efficiency of intermediate representation
+- **Energy consumption** - Estimated power usage
+- **Execution time** - Performance of generated code
+- **Code quality** - Size and structure of generated C code
+
+See [`benchmarks/README.md`](benchmarks/README.md) for detailed documentation.
 
 ## Requirements
 

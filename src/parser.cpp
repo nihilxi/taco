@@ -2,6 +2,7 @@
 #include <fstream>
 #include "../include/parser.h"
 #include "../include/lexer.h"
+#include "../include/logger.h"
 
 // Constructor
 Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
@@ -54,7 +55,7 @@ std::unique_ptr<ASTNode> Parser::parsePrimary()
         
         if (!match(TokenType::RPAREN))
         {
-            std::cerr << "Error: Expected ')' at line " << peek().line << std::endl;
+            logger << "Error: Expected ')' at line " << peek().line << std::endl;
         }
         
         return expr;
@@ -71,7 +72,7 @@ std::unique_ptr<ASTNode> Parser::parsePrimary()
         return std::make_unique<IdentifierNode>(token.value);
     }
     
-    std::cerr << "Error: Expected number or identifier at line " << token.line << std::endl;
+    logger << "Error: Expected number or identifier at line " << token.line << std::endl;
     return nullptr;
 }
 
@@ -122,12 +123,12 @@ std::unique_ptr<ASTNode> Parser::parseAssignment()
         }
         else
         {
-            std::cerr << "Error: Expected '=' after identifier at line " << token.line << std::endl;
+            logger << "Error: Expected '=' after identifier at line " << token.line << std::endl;
             return nullptr;
         }
     }
     
-    std::cerr << "Error: Expected identifier at line " << token.line << std::endl;
+    logger << "Error: Expected identifier at line " << token.line << std::endl;
     return nullptr;
 }
 
@@ -138,7 +139,7 @@ std::unique_ptr<ASTNode> Parser::parsePrint()
     
     if (!match(TokenType::LPAREN))
     {
-        std::cerr << "Error: Expected '(' after 'print' at line " << peek().line << std::endl;
+        logger << "Error: Expected '(' after 'print' at line " << peek().line << std::endl;
         return nullptr;
     }
     
@@ -146,7 +147,7 @@ std::unique_ptr<ASTNode> Parser::parsePrint()
     
     if (!match(TokenType::RPAREN))
     {
-        std::cerr << "Error: Expected ')' after expression at line " << peek().line << std::endl;
+        logger << "Error: Expected ')' after expression at line " << peek().line << std::endl;
         return nullptr;
     }
     
@@ -167,7 +168,7 @@ std::unique_ptr<ASTNode> Parser::parseStatement()
         return parseAssignment();
     }
     
-    std::cerr << "Error: Expected statement at line " << token.line << std::endl;
+    logger << "Error: Expected statement at line " << token.line << std::endl;
     return nullptr;
 }
 
@@ -194,7 +195,7 @@ std::vector<std::unique_ptr<ASTNode>> Parser::parse()
 }
 
 // Print AST for debugging
-void Parser::printAST(const ASTNode* node, int indent)
+void Parser::printAST(const ASTNode* node, int indent, bool toConsole)
 {
     if (!node)
         return;
@@ -206,43 +207,70 @@ void Parser::printAST(const ASTNode* node, int indent)
         case ASTNodeType::NUMBER:
         {
             const NumberNode* num = static_cast<const NumberNode*>(node);
-            std::cout << indentation << "Number: " << num->value << std::endl;
+            if (toConsole)
+                std::cout << indentation << "Number: " << num->value << std::endl;
+            else
+                logger << indentation << "Number: " << num->value << std::endl;
             break;
         }
         case ASTNodeType::IDENTIFIER:
         {
             const IdentifierNode* id = static_cast<const IdentifierNode*>(node);
-            std::cout << indentation << "Identifier: " << id->name << std::endl;
+            if (toConsole)
+                std::cout << indentation << "Identifier: " << id->name << std::endl;
+            else
+                logger << indentation << "Identifier: " << id->name << std::endl;
             break;
         }
         case ASTNodeType::BINARY_OP:
         {
             const BinaryOpNode* binop = static_cast<const BinaryOpNode*>(node);
-            std::cout << indentation << "BinaryOp: ";
-            switch (binop->op)
+            if (toConsole)
             {
-                case TokenType::ADD: std::cout << "+" << std::endl; break;
-                case TokenType::SUB: std::cout << "-" << std::endl; break;
-                case TokenType::MUL: std::cout << "*" << std::endl; break;
-                case TokenType::DIV: std::cout << "/" << std::endl; break;
-                default: std::cout << "?" << std::endl; break;
+                std::cout << indentation << "BinaryOp: ";
+                switch (binop->op)
+                {
+                    case TokenType::ADD: std::cout << "+" << std::endl; break;
+                    case TokenType::SUB: std::cout << "-" << std::endl; break;
+                    case TokenType::MUL: std::cout << "*" << std::endl; break;
+                    case TokenType::DIV: std::cout << "/" << std::endl; break;
+                    default: std::cout << "?" << std::endl; break;
+                }
             }
-            printAST(binop->left.get(), indent + 1);
-            printAST(binop->right.get(), indent + 1);
+            else
+            {
+                logger << indentation << "BinaryOp: ";
+                switch (binop->op)
+                {
+                    case TokenType::ADD: logger << "+" << std::endl; break;
+                    case TokenType::SUB: logger << "-" << std::endl; break;
+                    case TokenType::MUL: logger << "*" << std::endl; break;
+                    case TokenType::DIV: logger << "/" << std::endl; break;
+                    default: logger << "?" << std::endl; break;
+                }
+            }
+            printAST(binop->left.get(), indent + 1, toConsole);
+            printAST(binop->right.get(), indent + 1, toConsole);
             break;
         }
         case ASTNodeType::ASSIGNMENT:
         {
             const AssignmentNode* assign = static_cast<const AssignmentNode*>(node);
-            std::cout << indentation << "Assignment: " << assign->identifier << std::endl;
-            printAST(assign->expression.get(), indent + 1);
+            if (toConsole)
+                std::cout << indentation << "Assignment: " << assign->identifier << std::endl;
+            else
+                logger << indentation << "Assignment: " << assign->identifier << std::endl;
+            printAST(assign->expression.get(), indent + 1, toConsole);
             break;
         }
         case ASTNodeType::PRINT:
         {
             const PrintNode* print = static_cast<const PrintNode*>(node);
-            std::cout << indentation << "Print:" << std::endl;
-            printAST(print->expression.get(), indent + 1);
+            if (toConsole)
+                std::cout << indentation << "Print:" << std::endl;
+            else
+                logger << indentation << "Print:" << std::endl;
+            printAST(print->expression.get(), indent + 1, toConsole);
             break;
         }
     }

@@ -55,7 +55,7 @@ public:
     TACGenerator();
     
     std::vector<TACInstruction> generate(const std::vector<std::unique_ptr<ASTNode>>& ast);
-    void printTAC(const std::vector<TACInstruction>& tac);
+    void printTAC(const std::vector<TACInstruction>& tac, bool toConsole = false);
     
     const std::vector<TACInstruction>& getInstructions() const { return instructions; }
 };
