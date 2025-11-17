@@ -17,7 +17,8 @@ void printUsage(const char* program)
     std::cout << "  --tac             Show three-address code\n";
     std::cout << "  --energy          Show energy consumption report\n";
     std::cout << "  --energy-table    Show energy cost table\n";
-    std::cout << "  -o <file>         Output C file (default: output.c)\n";
+    std::cout << "  -o <file>         Output executable file (default: output)\n";
+    std::cout << "  --c-only          Generate only C code without compiling\n";
     std::cout << "  --help            Show this help message\n";
 }
 
@@ -35,7 +36,8 @@ int main(int argc, char *argv[])
     bool showTAC = false;
     bool showEnergy = false;
     bool showEnergyTable = false;
-    std::string outputFile = "output.c";
+    bool cOnly = false;
+    std::string outputFile = "output";
     std::string inputFile;
 
     for (int i = 1; i < argc; i++)
@@ -66,6 +68,10 @@ int main(int argc, char *argv[])
         else if (arg == "--energy-table")
         {
             showEnergyTable = true;
+        }
+        else if (arg == "--c-only")
+        {
+            cOnly = true;
         }
         else if (arg == "-o" && i + 1 < argc)
         {
@@ -168,10 +174,30 @@ int main(int argc, char *argv[])
     // 5. Code Generation (C)
     CCodeGenerator codeGen;
     std::string cCode = codeGen.generate(tac);
-    codeGen.writeToFile(cCode, outputFile);
+    
+    std::string cFilename = outputFile + ".c";
+    codeGen.writeToFile(cCode, cFilename);
 
-    std::cout << "\nCompilation successful!\n";
-    std::cout << "Output: " << outputFile << std::endl;
+    // 6. Compile to executable (unless --c-only flag is set)
+    if (!cOnly)
+    {
+        if (codeGen.compileToExecutable(cFilename, outputFile))
+        {
+            std::cout << "\nCompilation successful!\n";
+            std::cout << "Executable: " << outputFile << std::endl;
+        }
+        else
+        {
+            std::cerr << "\nExecutable creation failed!\n";
+            std::cerr << "C code is available in: " << cFilename << std::endl;
+            return 1;
+        }
+    }
+    else
+    {
+        std::cout << "\nC code generation successful!\n";
+        std::cout << "Output: " << cFilename << std::endl;
+    }
     
     // Print summary
     std::cout << "\n=== COMPILATION SUMMARY ===" << std::endl;

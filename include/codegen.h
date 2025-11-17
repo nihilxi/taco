@@ -22,6 +22,7 @@ public:
     
     std::string generate(const std::vector<TACInstruction>& tac);
     void writeToFile(const std::string& code, const std::string& filename);
+    bool compileToExecutable(const std::string& cFilename, const std::string& outputExecutable);
 };
 
 #endif // CODEGEN_H

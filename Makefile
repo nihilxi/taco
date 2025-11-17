@@ -90,6 +90,15 @@ clean:
 	rm -rf $(OBJ_DIR)
 	rm -f *_output.c *_output
 	rm -f output.c
+	rm -f *.o
+	rm -f *.out
+	rm -f *.exe
+	rm -f *.s *.asm
+	rm -f a.out
+	rm -f core
+	rm -f *~
+	rm -f .*.swp .*.swo
+	@echo "Cleaned all build artifacts and temporary files!"
 
 # Show help
 help:

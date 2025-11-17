@@ -156,3 +156,45 @@ void CCodeGenerator::writeToFile(const std::string& code, const std::string& fil
         std::cerr << "Error: Could not open file " << filename << " for writing" << std::endl;
     }
 }
+
+// Compile C code to executable using GCC
+bool CCodeGenerator::compileToExecutable(const std::string& cFilename, const std::string& outputExecutable)
+{
+    std::string command = "gcc -o " + outputExecutable + " " + cFilename + " -lm 2>&1";
+    
+    std::cout << "Compiling C code to executable..." << std::endl;
+    std::cout << "Command: " << command << std::endl;
+    
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe)
+    {
+        std::cerr << "Error: Could not execute GCC compiler" << std::endl;
+        return false;
+    }
+    
+    // Read compiler output
+    char buffer[256];
+    std::string result = "";
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+    {
+        result += buffer;
+    }
+    
+    int returnCode = pclose(pipe);
+    
+    if (returnCode != 0)
+    {
+        std::cerr << "GCC compilation failed:" << std::endl;
+        std::cerr << result << std::endl;
+        return false;
+    }
+    
+    if (!result.empty())
+    {
+        std::cout << "Compiler warnings/notes:" << std::endl;
+        std::cout << result << std::endl;
+    }
+    
+    std::cout << "Executable created: " << outputExecutable << std::endl;
+    return true;
+}
