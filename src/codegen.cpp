@@ -13,12 +13,18 @@ void CCodeGenerator::collectVariables(const std::vector<TACInstruction>& tac)
     
     for (const auto& instr : tac)
     {
+        // Skip labels - they shouldn't be treated as variables
+        if (instr.opcode == TACOpcode::LABEL || instr.opcode == TACOpcode::GOTO || instr.opcode == TACOpcode::IF_FALSE)
+        {
+            continue;
+        }
+        
         // Collect result variable
         if (!instr.result.empty())
         {
             if (instr.result[0] == 't')
                 temporaries.insert(instr.result);
-            else
+            else if (instr.result[0] != 'L') // Don't collect labels
                 variables.insert(instr.result);
         }
         
@@ -27,7 +33,7 @@ void CCodeGenerator::collectVariables(const std::vector<TACInstruction>& tac)
         {
             if (instr.arg1[0] == 't')
                 temporaries.insert(instr.arg1);
-            else
+            else if (instr.arg1[0] != 'L') // Don't collect labels
                 variables.insert(instr.arg1);
         }
         
@@ -35,7 +41,7 @@ void CCodeGenerator::collectVariables(const std::vector<TACInstruction>& tac)
         {
             if (instr.arg2[0] == 't')
                 temporaries.insert(instr.arg2);
-            else
+            else if (instr.arg2[0] != 'L') // Don't collect labels
                 variables.insert(instr.arg2);
         }
     }
@@ -76,25 +82,75 @@ std::string CCodeGenerator::generateInstruction(const TACInstruction& instr)
 {
     std::ostringstream oss;
     
+    // Helper lambda to format operands (add .0 to numeric literals if needed)
+    auto formatOperand = [](const std::string& op) -> std::string {
+        // Check if it's a numeric literal (all digits, possibly with decimal point)
+        if (!op.empty() && (isdigit(op[0]) || (op[0] == '-' && op.length() > 1 && isdigit(op[1]))))
+        {
+            // If it doesn't contain a decimal point, add .0
+            if (op.find('.') == std::string::npos)
+            {
+                return op + ".0";
+            }
+        }
+        return op;
+    };
+    
     switch (instr.opcode)
     {
         case TACOpcode::ADD:
-            oss << "    " << instr.result << " = " << instr.arg1 << " + " << instr.arg2 << ";";
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " + " << formatOperand(instr.arg2) << ";";
             break;
         case TACOpcode::SUB:
-            oss << "    " << instr.result << " = " << instr.arg1 << " - " << instr.arg2 << ";";
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " - " << formatOperand(instr.arg2) << ";";
             break;
         case TACOpcode::MUL:
-            oss << "    " << instr.result << " = " << instr.arg1 << " * " << instr.arg2 << ";";
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " * " << formatOperand(instr.arg2) << ";";
             break;
         case TACOpcode::DIV:
-            oss << "    " << instr.result << " = " << instr.arg1 << " / " << instr.arg2 << ";";
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " / " << formatOperand(instr.arg2) << ";";
             break;
         case TACOpcode::ASSIGN:
-            oss << "    " << instr.result << " = " << instr.arg1 << ";";
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << ";";
+            break;
+        case TACOpcode::LT:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " < " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::GT:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " > " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::LE:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " <= " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::GE:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " >= " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::EQ:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " == " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::NE:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " != " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::AND:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " && " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::OR:
+            oss << "    " << instr.result << " = " << formatOperand(instr.arg1) << " || " << formatOperand(instr.arg2) << ";";
+            break;
+        case TACOpcode::NOT:
+            oss << "    " << instr.result << " = !" << formatOperand(instr.arg1) << ";";
+            break;
+        case TACOpcode::LABEL:
+            oss << instr.result << ":;";
+            break;
+        case TACOpcode::GOTO:
+            oss << "    goto " << instr.result << ";";
+            break;
+        case TACOpcode::IF_FALSE:
+            oss << "    if (!" << formatOperand(instr.arg1) << ") goto " << instr.result << ";";
             break;
         case TACOpcode::PRINT:
-            oss << "    printf(\"%g\\n\", " << instr.arg1 << ");";
+            oss << "    printf(\"%g\\n\", " << formatOperand(instr.arg1) << ");";
             break;
         default:
             oss << "    // Unsupported instruction";

@@ -1,27 +1,29 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include "../include/lexer.h"
 #include "../include/parser.h"
 #include "../include/tac.h"
-#include "../include/energy.h"
 #include "../include/codegen.h"
 #include "../include/logger.h"
 
-void printUsage(const char* program)
+void printUsage(const char *program)
 {
     std::cout << "TACO Compiler - Three-Address Code Compiler\n";
     std::cout << "Usage: " << program << " [options] <source_file.taco>\n\n";
     std::cout << "Options:\n";
-    std::cout << "  --tokens          Show token stream\n";
-    std::cout << "  --ast             Show abstract syntax tree\n";
-    std::cout << "  --tac             Show three-address code\n";
-    std::cout << "  --energy          Show energy consumption report\n";
-    std::cout << "  --energy-table    Show energy cost table\n";
     std::cout << "  -o <file>         Output executable file (default: output)\n";
-    std::cout << "  --c-only          Generate only C code without compiling\n";
-    std::cout << "  --log <file>      Output log file (default: compilation.log)\n";
-    std::cout << "  --help            Show this help message\n";
+    std::cout << "  --gen-c           Generate C code file (required for --c-only)\n";
+    std::cout << "  --c-only          Generate only C code without compiling (implies --gen-c)\n";
+    std::cout << "  --log <options>   Enable logging with specified components (comma-separated)\n";
+    std::cout << "                    Options: tokens, ast, tac, timing, profile, all\n";
+    std::cout << "                    Example: --log tokens,ast or --log all\n";
+    std::cout << "                    Log file: compilation_DDMMYYYY_HHMMSS.log\n";
+    std::cout << "  --help            Show this help message\n\n";
 }
 
 int main(int argc, char *argv[])
@@ -33,48 +35,35 @@ int main(int argc, char *argv[])
     }
 
     // Parse command line arguments
-    bool showTokens = false;
-    bool showAST = false;
-    bool showTAC = false;
-    bool showEnergy = false;
-    bool showEnergyTable = false;
+    bool logTokens = false;
+    bool logAST = false;
+    bool logTAC = false;
+    bool logTiming = false;
     bool cOnly = false;
+    bool generateC = false;
+    bool enableLogging = false;
+    bool logProfiling = false;
     std::string outputFile = "output";
-    std::string logFile = "compilation.log";
+    std::string logFile = "";
     std::string inputFile;
 
     for (int i = 1; i < argc; i++)
     {
         std::string arg = argv[i];
-        
+
         if (arg == "--help")
         {
             printUsage(argv[0]);
             return 0;
         }
-        else if (arg == "--tokens")
+        else if (arg == "--gen-c")
         {
-            showTokens = true;
-        }
-        else if (arg == "--ast")
-        {
-            showAST = true;
-        }
-        else if (arg == "--tac")
-        {
-            showTAC = true;
-        }
-        else if (arg == "--energy")
-        {
-            showEnergy = true;
-        }
-        else if (arg == "--energy-table")
-        {
-            showEnergyTable = true;
+            generateC = true;
         }
         else if (arg == "--c-only")
         {
             cOnly = true;
+            generateC = true; // --c-only implies --gen-c
         }
         else if (arg == "-o" && i + 1 < argc)
         {
@@ -82,7 +71,47 @@ int main(int argc, char *argv[])
         }
         else if (arg == "--log" && i + 1 < argc)
         {
-            logFile = argv[++i];
+            enableLogging = true;
+            std::string logOptions = argv[++i];
+            
+            // Parse comma-separated log options
+            std::istringstream iss(logOptions);
+            std::string option;
+            while (std::getline(iss, option, ','))
+            {
+                if (option == "all")
+                {
+                    logTokens = true;
+                    logAST = true;
+                    logTAC = true;
+                    logTiming = true;
+                    logProfiling = true;
+                }
+                else if (option == "tokens")
+                {
+                    logTokens = true;
+                }
+                else if (option == "ast")
+                {
+                    logAST = true;
+                }
+                else if (option == "tac")
+                {
+                    logTAC = true;
+                }
+                else if (option == "timing")
+                {
+                    logTiming = true;
+                }
+                else if (option == "profile")
+                {
+                    logProfiling = true;
+                }
+                else
+                {
+                    std::cerr << "Warning: Unknown log option '" << option << "' (valid: tokens, ast, tac, timing, profile, all)\n";
+                }
+            }
         }
         else if (arg[0] != '-')
         {
@@ -105,13 +134,42 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Open log file
-    if (!logger.open(logFile))
+    // Open log file if logging is enabled
+    if (enableLogging)
     {
-        std::cerr << "Error: Could not open log file: " << logFile << std::endl;
-        return 1;
+        // Generate log filename with timestamp if not specified
+        if (logFile.empty())
+        {
+            auto now = std::chrono::system_clock::now();
+            auto time = std::chrono::system_clock::to_time_t(now);
+            std::tm *tm_time = std::localtime(&time);
+
+            std::ostringstream oss;
+            oss << "compilation_"
+                << std::setfill('0') << std::setw(2) << tm_time->tm_mday
+                << std::setfill('0') << std::setw(2) << (tm_time->tm_mon + 1)
+                << std::setfill('0') << std::setw(4) << (tm_time->tm_year + 1900)
+                << "_"
+                << std::setfill('0') << std::setw(2) << tm_time->tm_hour
+                << std::setfill('0') << std::setw(2) << tm_time->tm_min
+                << std::setfill('0') << std::setw(2) << tm_time->tm_sec
+                << ".log";
+            logFile = oss.str();
+        }
+
+        if (!logger.open(logFile))
+        {
+            std::cerr << "Error: Could not open log file: " << logFile << std::endl;
+            return 1;
+        }
+        std::cout << "Logging to: " << logFile << std::endl;
+        
+        // Enable profiling if requested
+        if (logProfiling)
+        {
+            logger.enableProfiling(true);
+        }
     }
-    std::cout << "Logging to: " << logFile << std::endl;
 
     // Read source file
     std::ifstream sourceFile(inputFile);
@@ -129,21 +187,30 @@ int main(int argc, char *argv[])
     }
     sourceFile.close();
 
-    logger << "Compiling: " << inputFile << "\n\n";
+    if (enableLogging)
+    {
+        logger << "Compiling: " << inputFile << "\n\n";
+    }
 
     // 1. Lexical Analysis
     logger.startTimer();
-    std::vector<Token> tokens = lexing(sourceCode);
-    logger.endTimer("Lexical Analysis");
+    if (logProfiling)
+        logger.startProfiling();
     
-    if (showTokens)
+    std::vector<Token> tokens = lexing(sourceCode);
+    
+    if (logProfiling)
+        logger.endProfiling("Lexical Analysis");
+    logger.endTimer("Lexical Analysis");
+
+    if (logTokens && enableLogging)
     {
         logger << "=== TOKENS ===" << std::endl;
         for (const auto &token : tokens)
         {
             if (token.type == TokenType::END_OF_FILE)
                 break;
-            logger << "Line " << token.line << ":" << token.column 
+            logger << "Line " << token.line << ":" << token.column
                    << " - " << token.value << std::endl;
         }
         logger << std::endl;
@@ -151,109 +218,196 @@ int main(int argc, char *argv[])
 
     // 2. Syntax Analysis (Parsing)
     logger.startTimer();
+    if (logProfiling)
+        logger.startProfiling();
+    
     Parser parser(tokens);
     auto ast = parser.parse();
+    
+    if (logProfiling)
+        logger.endProfiling("Syntax Analysis (Parsing)");
     logger.endTimer("Syntax Analysis (Parsing)");
-    
-    // Always print AST to logs
-    logger << "=== ABSTRACT SYNTAX TREE ===" << std::endl;
-    for (const auto &statement : ast)
+
+    // Print AST to logs if requested
+    if (logAST && enableLogging)
     {
-        parser.printAST(statement.get(), 0, false);
-    }
-    logger << std::endl;
-    
-    // Also print to console if flag is set
-    if (showAST)
-    {
-        std::cout << "=== ABSTRACT SYNTAX TREE ===" << std::endl;
+        logger << "=== ABSTRACT SYNTAX TREE ===" << std::endl;
         for (const auto &statement : ast)
         {
-            parser.printAST(statement.get(), 0, true);
+            parser.printAST(statement.get(), 0, false);
         }
-        std::cout << std::endl;
+        logger << std::endl;
     }
 
     // 3. TAC Generation
     logger.startTimer();
+    if (logProfiling)
+        logger.startProfiling();
+    
     TACGenerator tacGen;
     std::vector<TACInstruction> tac = tacGen.generate(ast);
+    
+    if (logProfiling)
+        logger.endProfiling("TAC Generation");
     logger.endTimer("TAC Generation");
-    
-    // Always print TAC to logs
-    tacGen.printTAC(tac, false);
-    logger << std::endl;
-    
-    // Also print to console if flag is set
-    if (showTAC)
-    {
-        tacGen.printTAC(tac, true);
-        std::cout << std::endl;
-    }
 
-    // 4. Energy Analysis
-    logger.startTimer();
-    EnergyModel energyModel;
-    
-    if (showEnergyTable)
+    // Print TAC to logs if requested
+    if (logTAC && enableLogging)
     {
-        energyModel.printEnergyTable();
+        tacGen.printTAC(tac, false);
         logger << std::endl;
     }
-    
-    if (showEnergy)
-    {
-        energyModel.printEnergyReport(tac);
-        logger << std::endl;
-    }
-    logger.endTimer("Energy Analysis");
 
-    // 5. Code Generation (C)
-    logger.startTimer();
-    CCodeGenerator codeGen;
-    std::string cCode = codeGen.generate(tac);
-    
-    std::string cFilename = outputFile + ".c";
-    codeGen.writeToFile(cCode, cFilename);
-    logger.endTimer("C Code Generation");
-
-    // 6. Compile to executable (unless --c-only flag is set)
-    if (!cOnly)
+    // 4. Code Generation (C) - only if --gen-c or --c-only flag is set
+    std::string cFilename;
+    if (generateC)
     {
         logger.startTimer();
-        if (codeGen.compileToExecutable(cFilename, outputFile))
+        if (logProfiling)
+            logger.startProfiling();
+        
+        CCodeGenerator codeGen;
+        std::string cCode = codeGen.generate(tac);
+
+        cFilename = outputFile + ".c";
+        codeGen.writeToFile(cCode, cFilename);
+        
+        if (logProfiling)
+            logger.endProfiling("C Code Generation");
+        logger.endTimer("C Code Generation");
+
+        // Compile to executable (unless --c-only flag is set)
+        if (!cOnly)
         {
-            logger.endTimer("C to Executable Compilation");
-            logger << "\nCompilation successful!\n";
-            logger << "Executable: " << outputFile << std::endl;
+            logger.startTimer();
+            if (logProfiling)
+                logger.startProfiling();
+            
+            if (codeGen.compileToExecutable(cFilename, outputFile))
+            {
+                if (logProfiling)
+                    logger.endProfiling("C to Executable Compilation");
+                logger.endTimer("C to Executable Compilation");
+                if (enableLogging)
+                {
+                    logger << "Compilation successful!\n";
+                    logger << "Executable: " << outputFile << std::endl;
+                }
+                std::cout << "Executable created: " << outputFile << std::endl;
+            }
+            else
+            {
+                if (logProfiling)
+                    logger.endProfiling("C to Executable Compilation");
+                logger.endTimer("C to Executable Compilation");
+                if (enableLogging)
+                {
+                    logger << "\nExecutable creation failed!\n";
+                    logger << "C code is available in: " << cFilename << std::endl;
+                }
+                std::cerr << "Error: Failed to compile C code to executable" << std::endl;
+                return 1;
+            }
         }
         else
         {
-            logger.endTimer("C to Executable Compilation");
-            logger << "\nExecutable creation failed!\n";
-            logger << "C code is available in: " << cFilename << std::endl;
-            return 1;
+            if (enableLogging)
+            {
+                logger << "\nC code generation successful!\n";
+                logger << "Output: " << cFilename << std::endl;
+            }
+            std::cout << "C code generated: " << cFilename << std::endl;
         }
     }
     else
     {
-        logger << "\nC code generation successful!\n";
-        logger << "Output: " << cFilename << std::endl;
+        // Default behavior: compile directly to executable without saving C file
+        logger.startTimer();
+        if (logProfiling)
+            logger.startProfiling();
+        
+        CCodeGenerator codeGen;
+        std::string cCode = codeGen.generate(tac);
+
+        // Create temporary C file
+        cFilename = outputFile + "_temp.c";
+        codeGen.writeToFile(cCode, cFilename);
+        
+        if (logProfiling)
+            logger.endProfiling("C Code Generation");
+        logger.endTimer("C Code Generation");
+
+        logger.startTimer();
+        if (logProfiling)
+            logger.startProfiling();
+        
+        if (codeGen.compileToExecutable(cFilename, outputFile))
+        {
+            // Remove temporary C file after successful compilation
+            std::remove(cFilename.c_str());
+
+            if (logProfiling)
+                logger.endProfiling("C to Executable Compilation");
+            logger.endTimer("C to Executable Compilation");
+            if (enableLogging)
+            {
+                logger << "Compilation successful!\n";
+                logger << "Executable: " << outputFile << std::endl;
+            }
+            std::cout << "Compilation successful! Executable: " << outputFile << std::endl;
+        }
+        else
+        {
+            if (logProfiling)
+                logger.endProfiling("C to Executable Compilation");
+            logger.endTimer("C to Executable Compilation");
+            if (enableLogging)
+            {
+                logger << "\nExecutable creation failed!\n";
+            }
+            std::cerr << "Error: Compilation failed" << std::endl;
+            return 1;
+        }
+    }
+
+    // Print summary - always show in console
+    std::cout << "\n=== COMPILATION SUMMARY ===" << std::endl;
+    std::cout << "Tokens: " << tokens.size() << std::endl;
+    std::cout << "AST nodes: " << ast.size() << std::endl;
+    std::cout << "TAC instructions: " << tac.size() << std::endl;
+    
+    // Print timing report - always show in console
+    logger.printTimingReportToConsole();
+    
+    // Print profiling report to console if enabled
+    if (logProfiling)
+    {
+        logger.printProfilingReportToConsole();
     }
     
-    // Print summary
-    logger << "\n=== COMPILATION SUMMARY ===" << std::endl;
-    logger << "Tokens: " << tokens.size() << std::endl;
-    logger << "AST nodes: " << ast.size() << std::endl;
-    logger << "TAC instructions: " << tac.size() << std::endl;
-    logger << "Estimated energy cost: " << energyModel.calculateProgramEnergy(tac) 
-           << " units" << std::endl;
-    
-    // Print timing report
-    logger.printTimingReport();
+    // Print summary and reports to log file if logging enabled
+    if (enableLogging)
+    {
+        logger << "\n=== COMPILATION SUMMARY ===" << std::endl;
+        logger << "Tokens: " << tokens.size() << std::endl;
+        logger << "AST nodes: " << ast.size() << std::endl;
+        logger << "TAC instructions: " << tac.size() << std::endl;
 
-    logger.close();
-    std::cout << "\nCompilation complete. Log saved to: " << logFile << std::endl;
-    
+        // Print timing report to log if timing flag is set
+        if (logTiming)
+        {
+            logger.printTimingReportToLog();
+        }
+        
+        // Print profiling report to log if enabled
+        if (logProfiling)
+        {
+            logger.printProfilingReportToLog();
+        }
+
+        logger.close();
+        std::cout << "\nCompilation complete. Log saved to: " << logFile << std::endl;
+    }
+
     return 0;
 }

@@ -18,6 +18,24 @@ enum class TACOpcode
     // Assignment
     ASSIGN,     // t = a
     
+    // Comparison
+    LT,         // t = a < b
+    GT,         // t = a > b
+    LE,         // t = a <= b
+    GE,         // t = a >= b
+    EQ,         // t = a == b
+    NE,         // t = a != b
+    
+    // Logical
+    AND,        // t = a && b
+    OR,         // t = a || b
+    NOT,        // t = !a
+    
+    // Control flow
+    LABEL,      // label:
+    GOTO,       // goto label
+    IF_FALSE,   // if !a goto label
+    
     // I/O
     PRINT       // print a
 };

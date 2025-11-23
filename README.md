@@ -1,254 +1,221 @@
-# TACO - Three-Address Code Compiler
+# TACO Compiler
 
-A lightweight compiler for arithmetic expressions with energy consumption analysis and C code generation.
+**Three-Address Code Compiler** - A compiler implementation that translates source code through lexical analysis, parsing, three-address code generation, and native code generation.
+
+## Overview
+
+TACO is a complete compiler toolchain written in C++ that implements the full compilation pipeline from source code to executable binaries. The compiler demonstrates fundamental compiler construction techniques including lexical analysis, syntax parsing, intermediate representation generation, and code generation.
 
 ## Features
 
-- **Simple syntax** - Clean arithmetic expression language
-- **TAC intermediate representation** - Three-Address Code generation
-- **Energy analysis** - Instruction-level power consumption modeling
-- **C code generation** - Compiles to optimized C code
-- **Print statements** - Output support for computed results
+- **Lexical Analysis**: Tokenization of source code with comprehensive token recognition
+- **Syntax Parsing**: Recursive descent parser generating Abstract Syntax Trees (AST)
+- **Three-Address Code (TAC)**: Intermediate representation for optimization and analysis
+- **Code Generation**: Transpilation to C code with optional direct compilation to executable
+- **Comprehensive Logging**: Detailed logging system for tokens, AST, TAC, and performance profiling
+- **Control Flow Structures**: Support for if statements, while loops, and for loops
+- **Arithmetic & Logical Operations**: Full expression evaluation with operator precedence
+- **Type System**: Integer and floating-point number support
 
-## Quick Start
+## Architecture
+
+The compiler is organized into several distinct phases:
+
+1. **Lexer** (`lexer.cpp`/`lexer.h`): Performs lexical analysis and tokenization
+2. **Parser** (`parser.cpp`/`parser.h`): Builds Abstract Syntax Tree from tokens
+3. **TAC Generator** (`tac_gen.cpp`/`tac.h`): Generates three-address code intermediate representation
+4. **Code Generator** (`codegen.cpp`/`codegen.h`): Produces C code from TAC
+5. **Logger** (`logger.cpp`/`logger.h`): Handles compilation logging and diagnostics
+
+## Building
+
+### Prerequisites
+
+- C++17 compatible compiler (g++ recommended)
+- Make build system
+- GCC (for final executable generation when not using `--c-only`)
+
+### Compilation
+
+Build the TACO compiler:
 
 ```bash
-# Build
 make
-
-# Compile a TACO program
-./taco examples/simple.taco -o output.c
-
-# Compile and run the generated C code
-gcc output.c -o output && ./output
 ```
 
-## Language Syntax
+Clean build artifacts:
 
-```taco
-// Variable assignments with arithmetic
-a = 10
-b = 20
-sum = a + b
-
-// Parentheses for grouping
-result = (a + b) * (sum / 2)
-
-// Print output
-print(result)
+```bash
+make clean
 ```
 
-### Supported Features
+Rebuild from scratch:
 
-**Operators:**
-- Arithmetic: `+`, `-`, `*`, `/`
-- Assignment: `=`
-- Grouping: `(`, `)`
+```bash
+make rebuild
+```
 
-**Data Types:**
-- Integers and floating-point numbers
-- Implicit double-precision arithmetic
+View build information:
 
-**Statements:**
-- Variable assignments: `variable = expression`
-- Print statements: `print(expression)`
+```bash
+make info
+```
 
 ## Usage
 
-### Command-Line Options
+### Basic Compilation
+
+Compile a TACO source file to an executable:
 
 ```bash
-./taco [options] <input.taco>
+./taco source_file.taco
+```
+
+### Command-Line Options
+
+```
+Usage: taco [options] <source_file.taco>
 
 Options:
-  --tokens          Show lexical token stream
-  --ast             Show abstract syntax tree
-  --tac             Show three-address code
-  --energy          Show energy consumption report
-  --energy-table    Show energy cost table
-  -o <file>         Output C file (default: output.c)
-  --help            Show help message
+  -o <file>         Output executable file (default: output)
+  --gen-c           Generate C code file (required for --c-only)
+  --c-only          Generate only C code without compiling (implies --gen-c)
+  --log <options>   Enable logging with specified components (comma-separated)
+                    Options: tokens, ast, tac, timing, profile, all
+                    Example: --log tokens,ast or --log all
+                    Log file: compilation_DDMMYYYY_HHMMSS.log
+  --help            Show this help message
 ```
 
 ### Examples
 
+Generate executable named `program`:
+
 ```bash
-# View compilation stages
-./taco --tokens --ast --tac examples/simple.taco
+./taco -o program source.taco
+```
 
-# Analyze energy consumption
-./taco --energy examples/dct.taco
+Generate C code without compiling:
 
-# Specify output file
-./taco examples/fft.taco -o fft.c
+```bash
+./taco --c-only source.taco
+```
+
+Compile with full logging:
+
+```bash
+./taco --log all source.taco
+```
+
+Compile with selective logging:
+
+```bash
+./taco --log tokens,ast,tac source.taco
+```
+
+## Language Support
+
+The TACO compiler supports a simple imperative programming language with the following constructs:
+
+### Variable Declarations and Assignments
+
+```
+let x = 10;
+let y = 20.5;
+x = x + 1;
+```
+
+### Arithmetic Operations
+
+```
+result = (a + b) * c - d / e;
+```
+
+### Control Flow
+
+**If Statements:**
+```
+if (x > 10) {
+    print(x);
+}
+```
+
+**While Loops:**
+```
+while (x < 100) {
+    x = x + 1;
+}
+```
+
+**For Loops:**
+```
+for (i = 0; i < 10; i = i + 1) {
+    print(i);
+}
+```
+
+### Comparison and Logical Operators
+
+- Comparison: `<`, `>`, `<=`, `>=`, `==`, `!=`
+- Logical: `&&`, `||`, `!`
+
+### Output
+
+```
+print(expression);
 ```
 
 ## Project Structure
 
 ```
 taco/
-├── src/              # Source code
-│   ├── lexer.cpp     # Tokenization
-│   ├── parser.cpp    # Syntax analysis and AST
-│   ├── tac_gen.cpp   # TAC generation
-│   ├── energy.cpp    # Energy modeling
-│   ├── codegen.cpp   # C code generation
-│   └── main.cpp      # Compiler driver
-├── include/          # Headers
-├── examples/         # Sample programs
-│   ├── simple.taco
-│   ├── fft.taco      # Fast Fourier Transform
-│   ├── dct.taco      # Discrete Cosine Transform
-│   └── rectangle.taco
-└── Makefile
+├── include/          # Header files
+│   ├── codegen.h     # Code generation declarations
+│   ├── lexer.h       # Lexical analyzer declarations
+│   ├── logger.h      # Logging system declarations
+│   ├── parser.h      # Parser and AST declarations
+│   └── tac.h         # Three-address code declarations
+├── src/              # Source files
+│   ├── codegen.cpp   # Code generation implementation
+│   ├── lexer.cpp     # Lexical analyzer implementation
+│   ├── logger.cpp    # Logging system implementation
+│   ├── main.cpp      # Compiler driver
+│   ├── parser.cpp    # Parser implementation
+│   └── tac_gen.cpp   # TAC generation implementation
+├── Makefile          # Build configuration
+├── LICENSE           # License file
+└── README.md         # This file
 ```
 
 ## Compilation Pipeline
 
-```
-TACO source → Lexer → Parser → AST → TAC Generator → Energy Analyzer
-                                                            ↓
-                                                     Energy Report
-                                                            ↓
-                                                    C Code Generator
-                                                            ↓
-                                                         C code
-```
+1. **Source Code** → Lexer → **Tokens**
+2. **Tokens** → Parser → **Abstract Syntax Tree (AST)**
+3. **AST** → TAC Generator → **Three-Address Code**
+4. **TAC** → Code Generator → **C Source Code**
+5. **C Code** → GCC → **Executable Binary**
 
-## Energy Model
+## Logging and Debugging
 
-Energy costs are based on typical CPU instruction latencies:
+The compiler includes a comprehensive logging system that can track:
 
-| Operation | Energy Cost | Description |
-|-----------|-------------|-------------|
-| ADD, SUB  | 1.5 units   | Basic arithmetic |
-| MUL       | 3.5 units   | Multiplication |
-| DIV       | 20.5 units  | Division (expensive) |
-| ASSIGN    | 1.0 unit    | Register move |
-| PRINT     | 12.0 units  | I/O operation |
+- **Tokens**: All tokens generated during lexical analysis
+- **AST**: Abstract syntax tree structure
+- **TAC**: Three-address code instructions
+- **Timing**: Compilation phase timing information
+- **Profile**: Detailed performance profiling
 
-View full energy table:
-```bash
-./taco --energy-table
-```
-
-## Example: Rectangle Calculations
-
-**Input** (`rectangle.taco`):
-```taco
-width = 10.5
-height = 7.3
-
-area = width * height
-print(area)
-
-perimeter = 2 * (width + height)
-print(perimeter)
-```
-
-**Output**:
-```
-76.65
-35.6
-```
-
-**Energy Analysis**:
-```bash
-./taco --energy rectangle.taco
-# Total energy: 60 units
-# - Multiplication: 29.17%
-# - Addition: 12.50%
-# - I/O: 40.00%
-```
-
-## Build System
-
-```bash
-make           # Build compiler
-make clean     # Remove build artifacts
-make test      # Run basic tests
-make benchmark # Run performance benchmarks
-```
-
-## Benchmarking
-
-The TACO compiler includes a comprehensive benchmark suite for performance analysis:
-
-```bash
-# Run standard benchmark (5 iterations)
-make benchmark
-
-# Quick benchmark (1 iteration)
-make benchmark-quick
-
-# Detailed benchmark (10 iterations)
-make benchmark-detailed
-
-# View results
-cat benchmarks/results/latest.txt
-```
-
-The benchmark suite measures:
-- **Compilation time** - How fast the compiler processes code
-- **TAC instruction count** - Efficiency of intermediate representation
-- **Energy consumption** - Estimated power usage
-- **Execution time** - Performance of generated code
-- **Code quality** - Size and structure of generated C code
-
-See [`benchmarks/README.md`](benchmarks/README.md) for detailed documentation.
-
-## Requirements
-
-- **g++** with C++14 support
-- **make**
-- **gcc** (for compiling generated C code)
-
-## Implementation Details
-
-### Three-Address Code
-
-TACO generates TAC where each instruction performs at most one operation:
-
-```taco
-result = (a + b) * (c - d)
-```
-
-Becomes:
-```
-t0 = a + b
-t1 = c - d
-t2 = t0 * t1
-result = t2
-```
-
-### Generated C Code
-
-All variables are declared as `double` with automatic temporary variable management:
-
-```c
-int main() {
-    double a = 0.0, b = 0.0, result = 0.0;
-    double t0 = 0.0, t1 = 0.0;
-    
-    a = 10;
-    b = 20;
-    t0 = a + b;
-    result = t0;
-    printf("%g\n", result);
-    
-    return 0;
-}
-```
-
-## Future Enhancements
-
-- Control flow statements (if/while/for)
-- Functions and scope
-- Type system
-- Arrays and data structures
-- Advanced optimizations
+Logs are written to timestamped files in the format: `compilation_DDMMYYYY_HHMMSS.log`
 
 ## License
 
-MIT License
+See the `LICENSE` file for details.
+
+## Contributing
+
+Contributions are welcome. Please ensure:
+
+- Code follows the existing style and conventions
+- New features include appropriate test cases
+- Documentation is updated accordingly
 
